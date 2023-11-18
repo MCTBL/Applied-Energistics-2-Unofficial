@@ -229,6 +229,7 @@ gui.appliedenergistics2.CraftingStatus=合成状态
 gui.appliedenergistics2.RemainingOperations=空闲处理器
 gui.appliedenergistics2.FromStorage=可用数量
 gui.appliedenergistics2.ToCraft=合成数量
+gui.appliedenergistics2.ToCraftRequests=步骤
 gui.appliedenergistics2.CraftingPlan=合成计划
 gui.appliedenergistics2.Automatic=自动分配
 gui.appliedenergistics2.Start=开始
