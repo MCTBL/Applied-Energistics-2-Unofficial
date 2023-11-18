@@ -404,11 +404,11 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 if (stored != null && stored.getStackSize() > 0) {
                     lines++;
                 }
-                if (pendingStack != null && pendingStack.getStackSize() > 0) {
+                if (missingStack != null && missingStack.getStackSize() > 0) {
                     lines++;
                 }
                 if (pendingStack != null && pendingStack.getStackSize() > 0) {
-                    lines++;
+                    lines += 2;
                 }
 
                 final int negY = ((lines - 1) * 5) / 2;
@@ -457,7 +457,18 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 if (pendingStack != null && pendingStack.getStackSize() > 0) {
                     String str = GuiText.ToCraft.getLocal() + ": "
                             + ReadableNumberConverter.INSTANCE.toWideReadableForm(pendingStack.getStackSize());
-                    final int w = 4 + this.fontRendererObj.getStringWidth(str);
+                    int w = 4 + this.fontRendererObj.getStringWidth(str);
+                    this.fontRendererObj.drawString(
+                            str,
+                            (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
+                            (y * offY + yo + 6 - negY + downY) * 2,
+                            GuiColors.CraftConfirmToCraft.getColor());
+
+                    downY += 5;
+                    str = GuiText.ToCraftRequests.getLocal() + ": "
+                            + ReadableNumberConverter.INSTANCE
+                                    .toWideReadableForm(pendingStack.getCountRequestableCrafts());
+                    w = 4 + this.fontRendererObj.getStringWidth(str);
                     this.fontRendererObj.drawString(
                             str,
                             (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
@@ -468,6 +479,9 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                         lineList.add(
                                 GuiText.ToCraft.getLocal() + ": "
                                         + NumberFormat.getInstance().format(pendingStack.getStackSize()));
+                        lineList.add(
+                                GuiText.ToCraftRequests.getLocal() + ": "
+                                        + NumberFormat.getInstance().format(pendingStack.getCountRequestableCrafts()));
                     }
                 }
 
