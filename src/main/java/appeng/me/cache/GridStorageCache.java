@@ -92,6 +92,9 @@ public class GridStorageCache implements IStorageGrid {
     private long essentiaCellCount;
     private int ticksCount;
     private int networkBytesUpdateFrequency;
+    private static final int CELL_RED = 3;
+    private static final int CELL_ORANGE = 2;
+    private static final int CELL_GREEN = 1;
 
     public GridStorageCache(final IGrid g) {
         this.myGrid = g;
@@ -390,9 +393,9 @@ public class GridStorageCache implements IStorageGrid {
                                 itemBytesTotal += iccr.getTotalBytes();
                                 itemBytesUsed += iccr.getUsedBytes();
                                 switch (iccr.getCellStatus()) {
-                                    case 1 -> itemCellG++;
-                                    case 2 -> itemCellO++;
-                                    case 3 -> itemCellR++;
+                                    case CELL_GREEN -> itemCellG++;
+                                    case CELL_ORANGE -> itemCellO++;
+                                    case CELL_RED -> itemCellR++;
                                 }
                                 itemTypesTotal += iccr.getTotalTypes();
                                 itemTypesUsed += iccr.getUsedTypes();
@@ -410,9 +413,9 @@ public class GridStorageCache implements IStorageGrid {
                                     fluidBytesTotal += iccr.getTotalBytes();
                                     fluidBytesUsed += iccr.getUsedBytes();
                                     switch (iccr.getCellStatus()) {
-                                        case 1 -> fluidCellG++;
-                                        case 2 -> fluidCellO++;
-                                        case 3 -> fluidCellR++;
+                                        case CELL_GREEN -> fluidCellG++;
+                                        case CELL_ORANGE -> fluidCellO++;
+                                        case CELL_RED -> fluidCellR++;
                                     }
                                     fluidTypesTotal += iccr.getTotalTypes();
                                     fluidTypesUsed += iccr.getUsedTypes();
@@ -421,9 +424,9 @@ public class GridStorageCache implements IStorageGrid {
                                     essentiaBytesTotal += iccr.getTotalBytes();
                                     essentiaBytesUsed += iccr.getUsedBytes();
                                     switch (iccr.getCellStatus()) {
-                                        case 1 -> essentiaCellG++;
-                                        case 2 -> essentiaCellO++;
-                                        case 3 -> essentiaCellR++;
+                                        case CELL_GREEN -> essentiaCellG++;
+                                        case CELL_ORANGE -> essentiaCellO++;
+                                        case CELL_RED -> essentiaCellR++;
                                     }
                                     essentiaTypesTotal += iccr.getTotalTypes();
                                     essentiaTypesUsed += iccr.getUsedTypes();
@@ -445,9 +448,9 @@ public class GridStorageCache implements IStorageGrid {
                             itemBytesTotal += iccr.getTotalBytes();
                             itemBytesUsed += iccr.getUsedBytes();
                             switch (iccr.getCellStatus()) {
-                                case 1 -> itemCellG++;
-                                case 2 -> itemCellO++;
-                                case 3 -> itemCellR++;
+                                case CELL_GREEN -> itemCellG++;
+                                case CELL_ORANGE -> itemCellO++;
+                                case CELL_RED -> itemCellR++;
                             }
                             itemTypesTotal += iccr.getTotalTypes();
                             itemTypesUsed += iccr.getUsedTypes();
@@ -464,9 +467,9 @@ public class GridStorageCache implements IStorageGrid {
                                     fluidBytesTotal += iccr.getTotalBytes();
                                     fluidBytesUsed += iccr.getUsedBytes();
                                     switch (iccr.getCellStatus()) {
-                                        case 1 -> fluidCellG++;
-                                        case 2 -> fluidCellO++;
-                                        case 3 -> fluidCellR++;
+                                        case CELL_GREEN -> fluidCellG++;
+                                        case CELL_ORANGE -> fluidCellO++;
+                                        case CELL_RED -> fluidCellR++;
                                     }
                                     fluidTypesTotal += iccr.getTotalTypes();
                                     fluidTypesUsed += iccr.getUsedTypes();
@@ -475,9 +478,9 @@ public class GridStorageCache implements IStorageGrid {
                                     essentiaBytesTotal += iccr.getTotalBytes();
                                     essentiaBytesUsed += iccr.getUsedBytes();
                                     switch (iccr.getCellStatus()) {
-                                        case 1 -> essentiaCellG++;
-                                        case 2 -> essentiaCellO++;
-                                        case 3 -> essentiaCellR++;
+                                        case CELL_GREEN -> essentiaCellG++;
+                                        case CELL_ORANGE -> essentiaCellO++;
+                                        case CELL_RED -> essentiaCellR++;
                                     }
                                     essentiaTypesTotal += iccr.getTotalTypes();
                                     essentiaTypesUsed += iccr.getUsedTypes();
