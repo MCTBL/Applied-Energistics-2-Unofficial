@@ -166,7 +166,7 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
     }
 
     @Override
-    public StorageChannel getCellType() {
-        return StorageChannel.ITEMS;
+    public TYPE getCellType() {
+        return TYPE.ITEM;
     }
 }

@@ -432,6 +432,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 26,
                 GuiColors.DefaultBlack.getColor());
+
         // Item byte status
         tempDouble = ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal();
         tempStr = ns.getItemBytesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
@@ -489,6 +490,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 26,
                 GuiColors.DefaultBlack.getColor());
+
         // Fluid byte status
         tempDouble = ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal();
         tempStr = ns.getFluidBytesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
@@ -546,6 +548,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 26,
                 GuiColors.DefaultBlack.getColor());
+
         // Essentia byte status
         tempDouble = ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal();
         tempStr = ns.getEssentiaBytesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
