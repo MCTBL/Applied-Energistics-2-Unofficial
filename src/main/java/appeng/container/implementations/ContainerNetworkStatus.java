@@ -203,15 +203,26 @@ public class ContainerNetworkStatus extends AEBaseContainer {
                 this.itemCellO = sg.getItemCellO();
                 this.itemCellR = sg.getItemCellR();
                 this.itemCellCount = sg.getItemCellCount();
-
                 this.itemTypesUsed = sg.getItemTypesUsed();
                 this.itemTypesTotal = sg.getItemTypesTotal();
 
                 this.fluidBytesUsed = sg.getFluidBytesUsed();
                 this.fluidBytesTotal = sg.getFluidBytesTotal();
+                this.fluidCellG = sg.getFluidCellG();
+                this.fluidCellO = sg.getFluidCellO();
+                this.fluidCellR = sg.getFluidCellR();
+                this.fluidCellCount = sg.getFluidCellCount();
+                this.fluidTypesUsed = sg.getFluidTypesUsed();
+                this.fluidTypesTotal = sg.getFluidTypesTotal();
 
                 this.essentiaBytesUsed = sg.getEssentiaBytesUsed();
                 this.essentiaBytesTotal = sg.getEssentiaBytesTotal();
+                this.essentiaCellG = sg.getEssentiaCellG();
+                this.essentiaCellO = sg.getEssentiaCellO();
+                this.essentiaCellR = sg.getEssentiaCellR();
+                this.essentiaCellCount = sg.getEssentiaCellCount();
+                this.essentiaTypesUsed = sg.getEssentiaTypesUsed();
+                this.essentiaTypesTotal = sg.getEssentiaTypesTotal();
             }
         }
         super.detectAndSendChanges();

@@ -435,7 +435,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Item byte status
         tempDouble = ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal();
-        tempStr = ns.getItemBytesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
+        tempStr = ns.getItemBytesTotal() == 0 ? " (0%)" : " (" + df.format(tempDouble) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.BytesInfo.getLocal() + ": "
                         + Platform.formatByteLong(ns.getItemBytesUsed())
@@ -452,7 +452,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Item type status
         tempDouble = ns.getItemTypesUsed() * 100d / ns.getItemTypesTotal();
-        tempStr = ns.getItemTypesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
+        tempStr = ns.getItemTypesTotal() == 0 ? " (0%)" : " (" + df.format(tempDouble) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.TypesInfo.getLocal() + ": " + ns.getItemTypesUsed() + " / " + ns.getItemTypesTotal(),
                 13,
@@ -493,7 +493,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Fluid byte status
         tempDouble = ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal();
-        tempStr = ns.getFluidBytesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
+        tempStr = ns.getFluidBytesTotal() == 0 ? " (0%)" : " (" + df.format(tempDouble) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.BytesInfo.getLocal() + ": "
                         + Platform.formatByteLong(ns.getFluidBytesUsed())
@@ -510,7 +510,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Fluid type status
         tempDouble = ns.getFluidTypesUsed() * 100d / ns.getFluidTypesTotal();
-        tempStr = ns.getFluidTypesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
+        tempStr = ns.getFluidTypesTotal() == 0 ? " (0%)" : " (" + df.format(tempDouble) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.TypesInfo.getLocal() + ": " + ns.getFluidTypesUsed() + " / " + ns.getFluidTypesTotal(),
                 13,
@@ -551,7 +551,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Essentia byte status
         tempDouble = ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal();
-        tempStr = ns.getEssentiaBytesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
+        tempStr = ns.getEssentiaBytesTotal() == 0 ? " (0%)" : " (" + df.format(tempDouble) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.BytesInfo.getLocal() + ": "
                         + Platform.formatByteLong(ns.getEssentiaBytesUsed())
@@ -568,7 +568,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Essentia type status
         tempDouble = ns.getEssentiaTypesUsed() * 100d / ns.getEssentiaTypesTotal();
-        tempStr = ns.getEssentiaTypesTotal() == 0 ? "(0%)" : " (" + df.format(tempDouble) + "%)";
+        tempStr = ns.getEssentiaTypesTotal() == 0 ? " (0%)" : " (" + df.format(tempDouble) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.TypesInfo.getLocal() + ": " + ns.getEssentiaTypesUsed() + " / " + ns.getEssentiaTypesTotal(),
                 13,
