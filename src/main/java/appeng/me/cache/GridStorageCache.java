@@ -15,8 +15,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.minecraft.item.ItemStack;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
@@ -48,9 +46,7 @@ import appeng.core.AEConfig;
 import appeng.me.helpers.GenericInterestManager;
 import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
-import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.NetworkInventoryHandler;
-import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.tile.storage.TileChest;
 import appeng.tile.storage.TileDrive;
 
@@ -437,30 +433,29 @@ public class GridStorageCache implements IStorageGrid {
 
                     }
                 } else if (icp instanceof TileChest tc) {
-                    // If there has any better way to get this handler...
-                    ItemStack cell = ((AppEngInternalInventory) (tc.getInternalInventory())).getStackInSlot(1);
-                    MEInventoryHandler<IAEItemStack> meih = (MEInventoryHandler<IAEItemStack>) AEApi.instance()
-                            .registries().cell().getCellInventory(cell, tc, StorageChannel.ITEMS);
-                    // exclude void cell
-                    if (meih instanceof ICellCacheRegistry iccr) {
-                        // exclude creative cell
-                        if (iccr.canGetInv()) {
-                            itemBytesTotal += iccr.getTotalBytes();
-                            itemBytesUsed += iccr.getUsedBytes();
-                            switch (iccr.getCellStatus()) {
-                                case CELL_GREEN -> itemCellG++;
-                                case CELL_ORANGE -> itemCellO++;
-                                case CELL_RED -> itemCellR++;
+                    // Check if chest is clear
+                    if (tc.getStackInSlot(1) == null) continue;
+                    IMEInventoryHandler handler = tc.getInternalHandler(StorageChannel.ITEMS);
+                    if (handler != null) {
+                        if (handler instanceof ICellCacheRegistry iccr) {
+                            // exclude creative cell
+                            if (iccr.canGetInv()) {
+                                itemBytesTotal += iccr.getTotalBytes();
+                                itemBytesUsed += iccr.getUsedBytes();
+                                switch (iccr.getCellStatus()) {
+                                    case CELL_GREEN -> itemCellG++;
+                                    case CELL_ORANGE -> itemCellO++;
+                                    case CELL_RED -> itemCellR++;
+                                }
+                                itemTypesTotal += iccr.getTotalTypes();
+                                itemTypesUsed += iccr.getUsedTypes();
+                                itemCellCount++;
                             }
-                            itemTypesTotal += iccr.getTotalTypes();
-                            itemTypesUsed += iccr.getUsedTypes();
-                            itemCellCount++;
                         }
                     } else {
-                        meih = (MEInventoryHandler<IAEItemStack>) AEApi.instance().registries().cell()
-                                .getCellInventory(cell, tc, StorageChannel.FLUIDS);
+                        handler = tc.getInternalHandler(StorageChannel.FLUIDS);
                         // exclude void cell
-                        if (meih instanceof ICellCacheRegistry iccr) {
+                        if (handler instanceof ICellCacheRegistry iccr) {
                             // exclude creative cell
                             if (iccr.canGetInv()) {
                                 if (iccr.getCellType() == ICellCacheRegistry.TYPE.FLUID) {

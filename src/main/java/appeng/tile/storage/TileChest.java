@@ -164,6 +164,10 @@ public class TileChest extends AENetworkPowerTile
         return 1;
     }
 
+    public IMEInventoryHandler getInternalHandler(final StorageChannel channel) {
+        return this.cellHandler.getCellInventory(this.inv.getStackInSlot(1), this, channel);
+    }
+
     public IMEInventoryHandler getHandler(final StorageChannel channel) throws ChestNoHandler {
         if (!this.isCached) {
             this.itemCell = null;
