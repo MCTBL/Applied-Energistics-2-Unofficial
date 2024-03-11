@@ -115,7 +115,8 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 }
             }
             case TREE -> {
-                this.xSize = TREE_VIEW_TEXTURE_WIDTH;
+                this.xSize = tallMode ? Math.max(TREE_VIEW_TEXTURE_WIDTH, (int) (width * 0.5))
+                        : TREE_VIEW_TEXTURE_WIDTH;
                 this.ySize = tallMode ? height - 64 : TREE_VIEW_TEXTURE_HEIGHT;
                 this.rows = tallMode ? (ySize - 46) / LIST_VIEW_TEXTURE_ROW_HEIGHT : 8;
                 this.craftingTree.widgetW = xSize - 35;
