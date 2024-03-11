@@ -10,6 +10,8 @@
 
 package appeng.client.me;
 
+import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -47,12 +49,14 @@ public class ItemRepo implements IDisplayRepo {
     private final IItemList<IAEItemStack> list = AEApi.instance().storage().createItemList();
     private final ArrayList<IAEItemStack> view = new ArrayList<>();
     private final ArrayList<ItemStack> dsp = new ArrayList<>();
+    private final ArrayList<IAEItemStack> cache = new ArrayList<>();
     private final IScrollSource src;
     private final ISortSource sortSrc;
 
     private int rowSize = 9;
 
     private String searchString = "";
+    private String lastSearchString = "";
     private IPartitionList<IAEItemStack> myPartitionList;
     private String NEIWord = null;
     private boolean hasPower;
@@ -85,11 +89,14 @@ public class ItemRepo implements IDisplayRepo {
     @Override
     public void postUpdate(final IAEItemStack is) {
         final IAEItemStack st = this.list.findPrecise(is);
-
         if (st != null) {
             st.reset();
             st.add(is);
+            if (isShiftKeyDown() && this.view.contains(st)) {
+                this.view.get(this.view.indexOf(st)).setStackSize(st.getStackSize());
+            }
         } else {
+            if (isShiftKeyDown()) this.cache.add(is);
             this.list.add(is);
         }
     }
@@ -100,9 +107,13 @@ public class ItemRepo implements IDisplayRepo {
         this.updateView();
     }
 
+    private boolean needUpdateView() {
+        return !isShiftKeyDown() || !this.lastSearchString.equals(this.searchString);
+    }
+
     @Override
     public void updateView() {
-        this.view.clear();
+        if (needUpdateView()) this.view.clear();
         this.dsp.clear();
 
         this.view.ensureCapacity(this.list.size());
@@ -144,7 +155,7 @@ public class ItemRepo implements IDisplayRepo {
         IItemDisplayRegistry registry = AEApi.instance().registries().itemDisplay();
 
         boolean notDone = false;
-        out: for (IAEItemStack is : this.list) {
+        out: for (IAEItemStack is : needUpdateView() ? this.list : this.cache) {
             // filter AEStack type
             IAEItemStack finalIs = is;
             if (registry.isBlacklisted(finalIs.getItem()) || registry.isBlacklisted(finalIs.getItem().getClass())) {
@@ -207,26 +218,29 @@ public class ItemRepo implements IDisplayRepo {
              * view.add( is ); notDone = false; } }
              */
         }
+        if (needUpdateView()) {
+            final Enum SortBy = this.sortSrc.getSortBy();
+            final Enum SortDir = this.sortSrc.getSortDir();
 
-        final Enum SortBy = this.sortSrc.getSortBy();
-        final Enum SortDir = this.sortSrc.getSortDir();
+            ItemSorters.setDirection((appeng.api.config.SortDir) SortDir);
+            ItemSorters.init();
 
-        ItemSorters.setDirection((appeng.api.config.SortDir) SortDir);
-        ItemSorters.init();
-
-        if (SortBy == SortOrder.MOD) {
-            this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_MOD);
-        } else if (SortBy == SortOrder.AMOUNT) {
-            this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_SIZE);
-        } else if (SortBy == SortOrder.INVTWEAKS) {
-            this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_INV_TWEAKS);
+            if (SortBy == SortOrder.MOD) {
+                this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_MOD);
+            } else if (SortBy == SortOrder.AMOUNT) {
+                this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_SIZE);
+            } else if (SortBy == SortOrder.INVTWEAKS) {
+                this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_INV_TWEAKS);
+            } else {
+                this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_NAME);
+            }
         } else {
-            this.view.sort(ItemSorters.CONFIG_BASED_SORT_BY_NAME);
+            this.cache.clear();
         }
-
         for (final IAEItemStack is : this.view) {
             this.dsp.add(is.getItemStack());
         }
+        this.lastSearchString = this.searchString;
     }
 
     private void updateNEI(final String filter) {

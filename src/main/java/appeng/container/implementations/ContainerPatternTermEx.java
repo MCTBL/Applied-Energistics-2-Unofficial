@@ -1,6 +1,9 @@
 package appeng.container.implementations;
 
-import static appeng.container.implementations.ContainerPatternTerm.doubleStacksInternal;
+import static appeng.container.implementations.ContainerPatternTerm.MULTIPLE_OF_BUTTON_CLICK;
+import static appeng.container.implementations.ContainerPatternTerm.MULTIPLE_OF_BUTTON_CLICK_ON_SHIFT;
+import static appeng.container.implementations.ContainerPatternTerm.canMultiplyOrDivide;
+import static appeng.container.implementations.ContainerPatternTerm.multiplyOrDivideStacksInternal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -407,13 +410,16 @@ public class ContainerPatternTermEx extends ContainerMEMonitorable
         return this.activePage;
     }
 
-    public void doubleStacks(boolean isShift) {
-        if (isShift) {
-            doubleStacksInternal(this.craftingSlots, 8);
-            doubleStacksInternal(this.outputSlots, 8);
-        } else {
-            doubleStacksInternal(this.craftingSlots, 2);
-            doubleStacksInternal(this.outputSlots, 2);
+    public void doubleStacks(int val) {
+        multiplyOrDivideStacks(
+                ((val & 1) != 0 ? MULTIPLE_OF_BUTTON_CLICK_ON_SHIFT : MULTIPLE_OF_BUTTON_CLICK)
+                        * ((val & 2) != 0 ? -1 : 1));
+    }
+
+    public void multiplyOrDivideStacks(int multi) {
+        if (canMultiplyOrDivide(this.craftingSlots, multi) && canMultiplyOrDivide(this.outputSlots, multi)) {
+            multiplyOrDivideStacksInternal(this.craftingSlots, multi);
+            multiplyOrDivideStacksInternal(this.outputSlots, multi);
         }
         this.detectAndSendChanges();
     }

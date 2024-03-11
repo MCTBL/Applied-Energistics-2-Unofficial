@@ -73,6 +73,15 @@ public enum GuiText {
     Inscriber,
     QuartzCuttingKnife,
 
+    PatternOptimizer,
+    StepsPerCraft,
+    PatternsAffected,
+    Multiplied,
+    MultipliedBy,
+    CurrentPatternOutput,
+    NewPatternOutput,
+    Optimize,
+
     // tunnel names
     METunnel,
     ItemTunnel,
@@ -142,6 +151,7 @@ public enum GuiText {
     SwitchCraftingSimulationDisplayMode,
 
     FromStorage,
+    FromStoragePercent,
     ToCraft,
     ToCraftRequests,
     CraftingPlan,
@@ -167,6 +177,8 @@ public enum GuiText {
     UnknownItem,
 
     InterfaceTerminalHint,
+    PatternOptimization,
+    PatternOptimizationHint,
     Range,
     TransparentFacades,
     TransparentFacadesHint,
@@ -185,6 +197,7 @@ public enum GuiText {
     Fuzzy,
     Filter,
     Sticky,
+    Contains,
 
     // Used in a terminal to indicate that an item is craftable
     SmallFontCraft,
@@ -198,6 +211,14 @@ public enum GuiText {
 
     // oredictionary filter GUI label
     OreFilterLabel,
+
+    PriorityCard,
+    PriorityCardTooltip,
+    PriorityCardTooltipModeEdit,
+    PriorityCardTooltipModeView,
+    PriorityCardTooltipModeSet,
+    PriorityCardTooltipModeInc,
+    PriorityCardTooltipModeDec,
 
     HoldShiftForTooltip,
     HoldShiftClick_HIGHLIGHT_INTERFACE,

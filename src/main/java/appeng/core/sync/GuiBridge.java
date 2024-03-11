@@ -68,11 +68,14 @@ import appeng.container.implementations.ContainerMEMonitorable;
 import appeng.container.implementations.ContainerMEPortableCell;
 import appeng.container.implementations.ContainerNetworkStatus;
 import appeng.container.implementations.ContainerNetworkTool;
+import appeng.container.implementations.ContainerOptimizePatterns;
 import appeng.container.implementations.ContainerOreFilter;
+import appeng.container.implementations.ContainerPatternMulti;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.implementations.ContainerPatternValueAmount;
 import appeng.container.implementations.ContainerPriority;
+import appeng.container.implementations.ContainerPriorityCard;
 import appeng.container.implementations.ContainerQNB;
 import appeng.container.implementations.ContainerQuartzKnife;
 import appeng.container.implementations.ContainerRenamer;
@@ -90,6 +93,7 @@ import appeng.helpers.IInterfaceHost;
 import appeng.helpers.IOreFilterable;
 import appeng.helpers.IPriorityHost;
 import appeng.helpers.WirelessTerminalGuiObject;
+import appeng.items.contents.PriorityCardObject;
 import appeng.items.contents.QuartzKnifeObj;
 import appeng.parts.automation.PartFormationPlane;
 import appeng.parts.automation.PartLevelEmitter;
@@ -145,6 +149,8 @@ public enum GuiBridge implements IGuiHandler {
 
     GUI_ADVANCED_NETWORK_TOOL(ContainerAdvancedNetworkTool.class, INetworkTool.class, GuiHostType.ITEM, null),
 
+    GUI_PRIORITY_CARD(ContainerPriorityCard.class, PriorityCardObject.class, GuiHostType.ITEM, null),
+
     GUI_QUARTZ_KNIFE(ContainerQuartzKnife.class, QuartzKnifeObj.class, GuiHostType.ITEM, null),
 
     GUI_DRIVE(ContainerDrive.class, TileDrive.class, GuiHostType.WORLD, SecurityPermissions.BUILD),
@@ -195,9 +201,13 @@ public enum GuiBridge implements IGuiHandler {
 
     GUI_PATTERN_VALUE_AMOUNT(ContainerPatternValueAmount.class, ITerminalHost.class, GuiHostType.WORLD,
             SecurityPermissions.CRAFT),
+    GUI_PATTERN_MULTI(ContainerPatternMulti.class, ITerminalHost.class, GuiHostType.WORLD, SecurityPermissions.CRAFT),
 
     GUI_CRAFTING_CONFIRM(ContainerCraftConfirm.class, ITerminalHost.class, GuiHostType.ITEM_OR_WORLD,
             SecurityPermissions.CRAFT),
+
+    GUI_OPTIMIZE_PATTERNS(ContainerOptimizePatterns.class, ITerminalHost.class, GuiHostType.ITEM_OR_WORLD,
+            SecurityPermissions.BUILD),
 
     GUI_INTERFACE_TERMINAL(ContainerInterfaceTerminal.class, PartInterfaceTerminal.class, GuiHostType.WORLD,
             SecurityPermissions.BUILD),

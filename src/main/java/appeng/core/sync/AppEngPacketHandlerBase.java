@@ -37,9 +37,11 @@ import appeng.core.sync.packets.PacketNEIBookmark;
 import appeng.core.sync.packets.PacketNEIDragClick;
 import appeng.core.sync.packets.PacketNEIRecipe;
 import appeng.core.sync.packets.PacketNewStorageDimension;
+import appeng.core.sync.packets.PacketOptimizePatterns;
 import appeng.core.sync.packets.PacketPaintedEntity;
 import appeng.core.sync.packets.PacketPartPlacement;
 import appeng.core.sync.packets.PacketPartialItem;
+import appeng.core.sync.packets.PacketPatternMultiSet;
 import appeng.core.sync.packets.PacketPatternSlot;
 import appeng.core.sync.packets.PacketPatternValueSet;
 import appeng.core.sync.packets.PacketProgressBar;
@@ -108,11 +110,13 @@ public class AppEngPacketHandlerBase {
         PACKET_NEI_DRAG(PacketNEIDragClick.class),
 
         PACKET_PATTERN_VALUE(PacketPatternValueSet.class),
+        PACKET_PATTERN_MULTI(PacketPatternMultiSet.class),
         PACKET_CRAFTING_REMAINING_OPERATIONS(PacketCraftingRemainingOperations.class),
         PACKET_CRAFTING_ITEM_INTERFACE(PacketCraftingItemInterface.class),
         PACKET_CRAFTING_TREE_DATA(PacketCraftingTreeData.class),
         PACKET_NEI_BOOKMARK(PacketNEIBookmark.class),
-        PACKET_INTERFACE_TERMINAL_UPDATE(PacketInterfaceTerminalUpdate.class),;
+        PACKET_INTERFACE_TERMINAL_UPDATE(PacketInterfaceTerminalUpdate.class),
+        PACKET_OPTIMIZE_PATTERNS(PacketOptimizePatterns.class),;
 
         private final Class<? extends AppEngPacket> packetClass;
         private final Constructor<? extends AppEngPacket> packetConstructor;
