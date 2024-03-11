@@ -41,14 +41,16 @@ public class GuiCraftingCPUTable {
     public GuiCraftingCPUTable(AEBaseGui parent, ContainerCPUTable container) {
         this.parent = parent;
         this.container = container;
+        CPU_TABLE_HEIGHT = 164;
+        CPU_TABLE_SLOTS = 6;
         this.cpuScrollbar = new GuiScrollbar();
         this.cpuScrollbar.setLeft(-16);
         this.cpuScrollbar.setTop(19);
         this.cpuScrollbar.setWidth(12);
-        this.cpuScrollbar.setHeight(137);
+        this.cpuScrollbar.setHeight(CPU_TABLE_HEIGHT - 27);
     }
 
-    private void updateScrollBar() {
+    public void updateScrollBar() {
         this.cpuScrollbar.setHeight(CPU_TABLE_HEIGHT - 27);
     }
 

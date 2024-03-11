@@ -115,12 +115,15 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 }
             }
             case TREE -> {
-                this.xSize = tallMode ? width - 200 : TREE_VIEW_TEXTURE_WIDTH;
+                this.xSize = TREE_VIEW_TEXTURE_WIDTH;
                 this.ySize = tallMode ? height - 64 : TREE_VIEW_TEXTURE_HEIGHT;
+                this.rows = tallMode ? (ySize - 46) / LIST_VIEW_TEXTURE_ROW_HEIGHT : 8;
                 this.craftingTree.widgetW = xSize - 35;
                 this.craftingTree.widgetH = ySize - 46;
             }
         }
+        GuiCraftingCPUTable.CPU_TABLE_SLOTS = this.rows;
+        GuiCraftingCPUTable.CPU_TABLE_HEIGHT = this.rows * 23 + 27;
     }
 
     private final ContainerCraftConfirm ccc;
@@ -237,14 +240,14 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
         this.switchTallMode = new GuiImgButton(
                 this.guiLeft - 18,
-                this.guiTop + 166,
+                this.guiTop + this.ySize - 18,
                 Settings.TERMINAL_STYLE,
                 tallMode ? TerminalStyle.TALL : TerminalStyle.SMALL);
         this.buttonList.add(switchTallMode);
 
         this.takeScreenshot = new GuiSimpleImgButton(
-                this.guiLeft - 18,
-                this.guiTop + 184,
+                this.guiLeft - 36,
+                this.guiTop + this.ySize - 18,
                 16 * 9,
                 ButtonToolTips.SaveAsImage.getLocal());
         this.buttonList.add(takeScreenshot);
@@ -287,7 +290,6 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     @Override
     public void drawScreen(final int mouseX, final int mouseY, final float btn) {
         this.updateCPUButtonText();
-
         cpuTable.drawScreen();
 
         this.start.enabled = !(this.ccc.hasNoCPU() || this.isSimulation());
