@@ -265,7 +265,7 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
             this.ySize = GUI_HEIGHT;
         }
         GuiCraftingCPUTable.CPU_TABLE_SLOTS = this.rows;
-        GuiCraftingCPUTable.CPU_TABLE_HEIGHT = this.rows * 23 + 27;
+        GuiCraftingCPUTable.CPU_TABLE_HEIGHT = this.rows * GuiCraftingCPUTable.CPU_TABLE_SLOT_HEIGHT + 27;
     }
 
     private void setScrollBar() {
