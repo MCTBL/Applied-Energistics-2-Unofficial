@@ -67,7 +67,7 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
         final IDefinitions definitions = AEApi.instance().definitions();
         final IParts parts = definitions.parts();
 
-        cpuTable = new GuiCraftingCPUTable(this, this.status.getCPUTable());
+        cpuTable = new GuiCraftingCPUTable(this, this.status.getCPUTable(), c -> false);
 
         if (target instanceof WirelessTerminalGuiObject) {
             for (final ItemStack wirelessTerminalStack : definitions.items().wirelessTerminal().maybeStack(1).asSet()) {
@@ -264,8 +264,8 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
             this.rows = DISPLAYED_ROWS;
             this.ySize = GUI_HEIGHT;
         }
-        GuiCraftingCPUTable.CPU_TABLE_HEIGHT = this.ySize - 20;
         GuiCraftingCPUTable.CPU_TABLE_SLOTS = this.rows;
+        GuiCraftingCPUTable.CPU_TABLE_HEIGHT = this.rows * GuiCraftingCPUTable.CPU_TABLE_SLOT_HEIGHT + 27;
     }
 
     private void setScrollBar() {

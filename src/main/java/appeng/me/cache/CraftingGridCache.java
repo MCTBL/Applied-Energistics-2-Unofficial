@@ -412,7 +412,7 @@ public class CraftingGridCache
     }
 
     @Override
-    public IItemList<IAEStack> getAvailableItems(final IItemList<IAEStack> out) {
+    public IItemList<IAEStack> getAvailableItems(final IItemList<IAEStack> out, int iteration) {
         // add craftable items!
         for (final IAEItemStack stack : this.craftableItems.keySet()) {
             out.addCrafting(stack);
@@ -426,7 +426,7 @@ public class CraftingGridCache
     }
 
     @Override
-    public IAEStack getAvailableItem(@Nonnull IAEStack request) {
+    public IAEStack getAvailableItem(@Nonnull IAEStack request, int iteration) {
         return null;
     }
 
@@ -507,7 +507,11 @@ public class CraftingGridCache
         if (target == null) {
             final List<CraftingCPUCluster> validCpusClusters = new ArrayList<>();
             for (final CraftingCPUCluster cpu : this.craftingCPUClusters) {
-                if (cpu.isActive() && !cpu.isBusy() && cpu.getAvailableStorage() >= job.getByteTotal()) {
+                if (cpu.isActive() && cpu.isBusy()
+                        && job.getOutput().isSameType(cpu.getFinalOutput())
+                        && cpu.getAvailableStorage() >= cpu.getUsedStorage() + job.getByteTotal()) {
+                    validCpusClusters.add(cpu);
+                } else if (cpu.isActive() && !cpu.isBusy() && cpu.getAvailableStorage() >= job.getByteTotal()) {
                     validCpusClusters.add(cpu);
                 }
             }
@@ -525,6 +529,9 @@ public class CraftingGridCache
 
                 @Override
                 public int compare(final CraftingCPUCluster firstCluster, final CraftingCPUCluster nextCluster) {
+                    if (firstCluster.isBusy() != nextCluster.isBusy()) {
+                        return Boolean.compare(nextCluster.isBusy(), firstCluster.isBusy());
+                    }
                     if (prioritizePower) return compareInternal(firstCluster, nextCluster);
                     else return compareInternal(nextCluster, firstCluster);
                 }

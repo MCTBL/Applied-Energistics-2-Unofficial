@@ -76,12 +76,15 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
     public static final int TREE_VIEW_TEXTURE_WIDTH = 238;
     public static final int TREE_VIEW_TEXTURE_HEIGHT = 238;
+    public static final int TREE_VIEW_DEFAULT_CPU_SLOTS = 8;
+    public static final float TERR_VIEW_MAX_WIDTH_RATIO = 0.5f;
 
     public static final int LIST_VIEW_TEXTURE_WIDTH = 238;
     public static final int LIST_VIEW_TEXTURE_HEIGHT = 206;
     public static final int LIST_VIEW_TEXTURE_BELOW_TOP_ROW_Y = 41;
     public static final int LIST_VIEW_TEXTURE_ABOVE_BOTTOM_ROW_Y = 110;
     public static final int LIST_VIEW_TEXTURE_ROW_HEIGHT = 23;
+
     /** How many pixels tall is the list view texture minus the space for rows of items */
     public static final int LIST_VIEW_TEXTURE_NONROW_HEIGHT = LIST_VIEW_TEXTURE_HEIGHT
             - (LIST_VIEW_TEXTURE_ABOVE_BOTTOM_ROW_Y - LIST_VIEW_TEXTURE_BELOW_TOP_ROW_Y)
@@ -115,12 +118,16 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 }
             }
             case TREE -> {
-                this.xSize = tallMode ? width - 200 : TREE_VIEW_TEXTURE_WIDTH;
+                this.xSize = tallMode ? Math.max(TREE_VIEW_TEXTURE_WIDTH, (int) (width * TERR_VIEW_MAX_WIDTH_RATIO))
+                        : TREE_VIEW_TEXTURE_WIDTH;
                 this.ySize = tallMode ? height - 64 : TREE_VIEW_TEXTURE_HEIGHT;
+                this.rows = tallMode ? (ySize - 46) / LIST_VIEW_TEXTURE_ROW_HEIGHT : TREE_VIEW_DEFAULT_CPU_SLOTS;
                 this.craftingTree.widgetW = xSize - 35;
                 this.craftingTree.widgetH = ySize - 46;
             }
         }
+        GuiCraftingCPUTable.CPU_TABLE_SLOTS = this.rows;
+        GuiCraftingCPUTable.CPU_TABLE_HEIGHT = this.rows * LIST_VIEW_TEXTURE_ROW_HEIGHT + 27;
     }
 
     private final ContainerCraftConfirm ccc;
@@ -165,9 +172,11 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         scrollbar = new GuiScrollbar();
         this.setScrollBar(scrollbar);
 
-        this.cpuTable = new GuiCraftingCPUTable(this, ((ContainerCraftConfirm) inventorySlots).cpuTable);
-
         this.ccc = (ContainerCraftConfirm) this.inventorySlots;
+        this.cpuTable = new GuiCraftingCPUTable(
+                this,
+                ((ContainerCraftConfirm) inventorySlots).cpuTable,
+                c -> this.ccc.cpuCraftingSameItem(c) && this.ccc.cpuMatches(c));
 
         if (te instanceof WirelessTerminalGuiObject) {
             this.OriginalGui = GuiBridge.GUI_WIRELESS_TERM;
@@ -237,14 +246,14 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
         this.switchTallMode = new GuiImgButton(
                 this.guiLeft - 18,
-                this.guiTop + 166,
+                this.guiTop + this.ySize - 18,
                 Settings.TERMINAL_STYLE,
                 tallMode ? TerminalStyle.TALL : TerminalStyle.SMALL);
         this.buttonList.add(switchTallMode);
 
         this.takeScreenshot = new GuiSimpleImgButton(
-                this.guiLeft - 18,
-                this.guiTop + 184,
+                this.guiLeft - 36,
+                this.guiTop + this.ySize - 18,
                 16 * 9,
                 ButtonToolTips.SaveAsImage.getLocal());
         this.buttonList.add(takeScreenshot);
@@ -287,13 +296,17 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     @Override
     public void drawScreen(final int mouseX, final int mouseY, final float btn) {
         this.updateCPUButtonText();
-
         cpuTable.drawScreen();
 
         this.start.enabled = !(this.ccc.hasNoCPU() || this.isSimulation());
         if (this.start.enabled) {
             CraftingCPUStatus selected = this.cpuTable.getContainer().getSelectedCPU();
-            if (selected == null || selected.getStorage() < this.ccc.getUsedBytes() || selected.isBusy()) {
+            if (selected != null && this.ccc.cpuCraftingSameItem(selected)) {
+                this.start.displayString = GuiText.Merge.getLocal();
+            } else {
+                this.start.displayString = GuiText.Start.getLocal();
+            }
+            if (selected == null || !this.ccc.cpuMatches(selected)) {
                 this.start.enabled = false;
             }
         }
@@ -377,12 +390,12 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         cpuTable.drawFG(offsetX, offsetY, mouseX, mouseY, guiLeft, guiTop);
 
         final long BytesUsed = this.ccc.getUsedBytes();
-        final String byteUsed = NumberFormat.getInstance().format(BytesUsed);
+        final String byteUsed = Platform.formatByteDouble(BytesUsed);
         final String bannerText;
         if (jobTree != null && !jobTree.getErrorMessage().isEmpty()) {
             bannerText = StatCollector.translateToLocal(jobTree.getErrorMessage());
         } else if (BytesUsed > 0) {
-            bannerText = (byteUsed + ' ' + GuiText.BytesUsed.getLocal());
+            bannerText = byteUsed;
         } else {
             bannerText = GuiText.CalculatingWait.getLocal();
         }
@@ -406,7 +419,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         } else {
             dsp = this.ccc.getCpuAvailableBytes() > 0
                     ? (GuiText.Bytes.getLocal() + ": "
-                            + NumberFormat.getInstance().format(this.ccc.getCpuAvailableBytes())
+                            + Platform.formatByteDouble(this.ccc.getCpuAvailableBytes())
                             + " : "
                             + GuiText.CoProcessors.getLocal()
                             + ": "

@@ -65,7 +65,9 @@ import appeng.core.features.registries.entries.VoidCellHandler;
 import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.core.stats.PlayerStatsRegistration;
+import appeng.helpers.BlockingModeIgnoreList;
 import appeng.hooks.AETrading;
+import appeng.hooks.SoundEventHandler;
 import appeng.hooks.TickHandler;
 import appeng.items.materials.ItemMultiMaterial;
 import appeng.me.cache.CraftingGridCache;
@@ -522,6 +524,8 @@ public final class Registration {
         FMLCommonHandler.instance().bus().register(TickHandler.INSTANCE);
         MinecraftForge.EVENT_BUS.register(TickHandler.INSTANCE);
 
+        MinecraftForge.EVENT_BUS.register(SoundEventHandler.INSTANCE);
+
         final PartPlacement pp = new PartPlacement();
         MinecraftForge.EVENT_BUS.register(pp);
         FMLCommonHandler.instance().bus().register(pp);
@@ -695,6 +699,11 @@ public final class Registration {
         Upgrades.ORE_FILTER.registerItem(items.cellSingularity(), 1);
         Upgrades.STICKY.registerItem(items.cellSingularity(), 1);
 
+        Upgrades.FUZZY.registerItem(items.cellUniverse(), 1);
+        Upgrades.INVERTER.registerItem(items.cellUniverse(), 1);
+        Upgrades.ORE_FILTER.registerItem(items.cellUniverse(), 1);
+        Upgrades.STICKY.registerItem(items.cellUniverse(), 1);
+
         Upgrades.FUZZY.registerItem(items.portableCell(), 1);
         Upgrades.INVERTER.registerItem(items.portableCell(), 1);
         Upgrades.ORE_FILTER.registerItem(items.portableCell(), 1);
@@ -819,5 +828,11 @@ public final class Registration {
          * initial recipe bake, if ore dictionary changes after this it re-bakes.
          */
         OreDictionaryHandler.INSTANCE.bakeRecipes();
+
+        /**
+         * Populate list of items that blocking mode should ignore
+         */
+        BlockingModeIgnoreList.registerIgnoredMaterials();
+
     }
 }

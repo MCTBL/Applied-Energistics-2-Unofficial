@@ -73,6 +73,7 @@ import appeng.tile.inventory.AppEngInternalAEInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.transformer.annotations.Integration.Interface;
 import appeng.transformer.annotations.Integration.Method;
+import appeng.util.IterationCounter;
 import appeng.util.Platform;
 import appeng.util.prioitylist.FuzzyPriorityList;
 import appeng.util.prioitylist.OreFilteredList;
@@ -351,7 +352,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
         final IMEInventory<IAEItemStack> in = this.getInternalHandler();
         IItemList<IAEItemStack> before = AEApi.instance().storage().createItemList();
         if (in != null) {
-            before = in.getAvailableItems(before);
+            before = in.getAvailableItems(before, IterationCounter.fetchNewId());
         }
 
         this.cached = false;
@@ -367,7 +368,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 
         IItemList<IAEItemStack> after = AEApi.instance().storage().createItemList();
         if (out != null) {
-            after = out.getAvailableItems(after);
+            after = out.getAvailableItems(after, IterationCounter.fetchNewId());
         }
 
         Platform.postListChanges(before, after, this, this.mySrc);
@@ -469,7 +470,8 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 
         try {
             // force grid to update handlers...
-            this.getProxy().getGrid().postEvent(new MENetworkCellArrayUpdate());
+            if (!(new Throwable().getStackTrace()[3].getMethodName().equals("cellUpdate")))
+                this.getProxy().getGrid().postEvent(new MENetworkCellArrayUpdate());
         } catch (final GridAccessException e) {
             // :3
         }
@@ -519,9 +521,6 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
         this.getHost().markForSave();
         this.resetCache(true);
     }
-
-    @Override
-    public void blinkCell(final int slot) {}
 
     @Override
     @Method(iname = IntegrationType.BuildCraftTransport)
