@@ -58,9 +58,6 @@ public class ContainerCraftingCPU extends AEBaseContainer
     @GuiSync(0)
     public long elapsed = -1;
 
-    @GuiSync(10)
-    public boolean isFollow = false;
-
     public ContainerCraftingCPU(final InventoryPlayer ip, final Object te) {
         super(ip, te);
         final IGridHost host = (IGridHost) (te instanceof IGridHost ? te : null);
@@ -153,7 +150,6 @@ public class ContainerCraftingCPU extends AEBaseContainer
         if (Platform.isServer() && this.getMonitor() != null && !this.list.isEmpty()) {
             try {
                 this.setElapsedTime(this.getMonitor().getElapsedTime());
-                this.setIsFollow(this.getMonitor().isFollow());
 
                 NBTTagCompound nbttc = new NBTTagCompound();
                 NBTTagList tagList = new NBTTagList();
@@ -261,20 +257,6 @@ public class ContainerCraftingCPU extends AEBaseContainer
 
     private void setNetwork(final IGrid network) {
         this.network = network;
-    }
-
-    public void revertFollow() {
-        if (this.getMonitor() != null) {
-            this.getMonitor().setIsFollow(!this.getMonitor().isFollow());
-        }
-    }
-
-    public boolean isFollow() {
-        return isFollow;
-    }
-
-    private void setIsFollow(final boolean isFollow) {
-        this.isFollow = isFollow;
     }
 
     public void addOrRemovePlayerName(final String name) {

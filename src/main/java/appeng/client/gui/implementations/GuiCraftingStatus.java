@@ -130,19 +130,11 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
         if (btn == this.selectCPU) {
             cpuTable.cycleCPU(rightClick);
         } else if (btn == this.follow) {
-            if (leftClick) {
-                try {
-                    NetworkHandler.instance.sendToServer(new PacketValueConfig("TileCrafting.Follow", "Follow"));
-                } catch (final IOException e) {
-                    AELog.debug(e);
-                }
-            } else if (rightClick) {
-                try {
-                    NetworkHandler.instance.sendToServer(
-                            new PacketValueConfig("TileCrafting.Player", this.mc.thePlayer.getCommandSenderName()));
-                } catch (final IOException e) {
-                    AELog.debug(e);
-                }
+            try {
+                NetworkHandler.instance.sendToServer(
+                        new PacketValueConfig("TileCrafting.Follow", this.mc.thePlayer.getCommandSenderName()));
+            } catch (final IOException e) {
+                AELog.debug(e);
             }
         } else if (btn == this.originalGuiBtn) {
             NetworkHandler.instance.sendToServer(new PacketSwitchGuis(this.originalGui));
@@ -176,7 +168,7 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
                 50,
                 20,
                 GuiText.Unfollow.getLocal(),
-                ButtonToolTips.FollowOrUnfollow.getLocal());
+                ButtonToolTips.Unfollow.getLocal());
         this.buttonList.add(this.follow);
 
         if (this.myIcon != null) {
@@ -288,23 +280,10 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
     }
 
     private void updateFollowButtonText() {
-
-        boolean isFollow = this.status.isFollow();
-        String tempTooltip = ButtonToolTips.FollowOrUnfollow.getLocal() + "\n"
-                + ButtonToolTips.FollowOrUnfollowUnderFirst.getLocal();
-
-        List<String> clusterFollowPlayerList = this.followPlayerNameList;
-        if (clusterFollowPlayerList != null && isFollow) {
-            if (clusterFollowPlayerList.size() > 0) {
-                tempTooltip = tempTooltip.concat("\n" + ButtonToolTips.FollowOrUnfollowUnderSecond.getLocal());
-                for (String playerName : clusterFollowPlayerList) {
-                    tempTooltip = tempTooltip.concat("\n" + playerName);
-                }
-            }
-        }
+        boolean isFollow = this.followPlayerNameList.contains(this.mc.thePlayer.getCommandSenderName());
 
         this.follow.displayString = isFollow ? GuiText.Follow.getLocal() : GuiText.Unfollow.getLocal();
-        this.follow.setTootipString(tempTooltip);
+        this.follow.setTootipString(isFollow ? ButtonToolTips.Follow.getLocal() : ButtonToolTips.Unfollow.getLocal());
     }
 
     @Override
