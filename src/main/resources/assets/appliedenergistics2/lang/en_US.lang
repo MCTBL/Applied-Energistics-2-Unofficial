@@ -524,8 +524,8 @@ gui.tooltips.appliedenergistics2.PriorityCardMode_Dec=Apply priority to targets 
 gui.tooltips.appliedenergistics2.MultiplyPattern=Multiply
 gui.tooltips.appliedenergistics2.DividePattern=Divide
 gui.tooltips.appliedenergistics2.MultiplyOrDividePatternHint=If it's positive, it's multiplying by that number. If it's negative, it's dividing by that number. It will not work if it is not divisible.
-gui.tooltips.appliedenergistics2.ToFollow=Now you are unfollow to this crafting job\nYou won't get a chat message when this craft is finished\nClick to follow this job
-gui.tooltips.appliedenergistics2.ToUnfollow=Now you are follow to this crafting job\nYou will get a chat message when this craft is finished\nClick to unfollow this job
+gui.tooltips.appliedenergistics2.ToFollow=Click to follow this craft and receive message when it is complete\nYou are not following this crafting job right now
+gui.tooltips.appliedenergistics2.ToUnfollow=Click to stop following this craft\nYou are following this crafting job and will receive chat message when it's complete
 
 # Units
 gui.appliedenergistics2.units.appliedenergstics=AE
