@@ -441,6 +441,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.startItemCount = 0;
         this.lastTime = 0;
         this.elapsedTime = 0;
+        this.numsOfOutput = 0;
         this.isComplete = true;
         this.playersFollowingCurrentCraft.clear();
     }
@@ -819,7 +820,6 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         if (this.myLastLink != null && this.isBusy()
                 && this.finalOutput.isSameType(job.getOutput())
                 && this.availableStorage >= this.usedStorage + job.getByteTotal()) {
-            this.numsOfOutput += job.getOutput().getStackSize();
             return mergeJob(g, job, src);
         }
 
@@ -943,6 +943,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             if (ci.commit(src)) {
                 this.finalOutput.add(job.getOutput());
                 this.usedStorage += job.getByteTotal();
+                this.numsOfOutput += job.getOutput().getStackSize();
 
                 this.prepareStepCount();
                 this.markDirty();
