@@ -64,7 +64,7 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
     private ItemStack myIcon = null;
     private boolean tallMode;
     private GuiImgButton switchTallMode;
-    private List<String> followPlayerNameList = new ArrayList<>();
+    private List<String> playersFollowingCurrentCraft = new ArrayList<>();
 
     public GuiCraftingStatus(final InventoryPlayer inventoryPlayer, final ITerminalHost te) {
         super(new ContainerCraftingStatus(inventoryPlayer, te));
@@ -280,7 +280,7 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
     }
 
     private void updateFollowButtonText() {
-        boolean isFollow = this.followPlayerNameList.contains(this.mc.thePlayer.getCommandSenderName());
+        boolean isFollow = this.playersFollowingCurrentCraft.contains(this.mc.thePlayer.getCommandSenderName());
 
         this.follow.displayString = isFollow ? GuiText.Follow.getLocal() : GuiText.Unfollow.getLocal();
         this.follow.setTootipString(isFollow ? ButtonToolTips.Follow.getLocal() : ButtonToolTips.Unfollow.getLocal());
@@ -319,10 +319,10 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
     }
 
     public void postUpdate(final NBTTagCompound playerNameListNBT) {
-        this.followPlayerNameList.clear();
+        this.playersFollowingCurrentCraft.clear();
         NBTTagList tagList = (NBTTagList) playerNameListNBT.getTag("playNameList");
         for (int index = 0; index < tagList.tagCount(); index++) {
-            this.followPlayerNameList.add(tagList.getStringTagAt(index));
+            this.playersFollowingCurrentCraft.add(tagList.getStringTagAt(index));
         }
     }
 }

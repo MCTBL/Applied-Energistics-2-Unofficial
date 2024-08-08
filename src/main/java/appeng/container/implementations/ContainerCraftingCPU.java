@@ -153,8 +153,10 @@ public class ContainerCraftingCPU extends AEBaseContainer
 
                 NBTTagCompound nbttc = new NBTTagCompound();
                 NBTTagList tagList = new NBTTagList();
-                if (this.getClusterFollowPlayerList() != null) {
-                    for (String name : this.getClusterFollowPlayerList()) {
+                List<String> playersFollowingCurrentCraft = this.getPlayersFollowingCurrentCraft();
+
+                if (playersFollowingCurrentCraft != null) {
+                    for (String name : playersFollowingCurrentCraft) {
                         tagList.appendTag(new NBTTagString(name));
                     }
                 }
@@ -175,24 +177,24 @@ public class ContainerCraftingCPU extends AEBaseContainer
                 this.list.resetStatus();
 
                 for (final Object g : this.crafters) {
-                    if (g instanceof EntityPlayer) {
+                    if (g instanceof EntityPlayerMP epmp) {
                         if (!a.isEmpty()) {
-                            NetworkHandler.instance.sendTo(a, (EntityPlayerMP) g);
+                            NetworkHandler.instance.sendTo(a, epmp);
                         }
 
                         if (!b.isEmpty()) {
-                            NetworkHandler.instance.sendTo(b, (EntityPlayerMP) g);
+                            NetworkHandler.instance.sendTo(b, epmp);
                         }
 
                         if (!c.isEmpty()) {
-                            NetworkHandler.instance.sendTo(c, (EntityPlayerMP) g);
+                            NetworkHandler.instance.sendTo(c, epmp);
                         }
 
-                        NetworkHandler.instance.sendTo(d, (EntityPlayerMP) g);
+                        NetworkHandler.instance.sendTo(d, epmp);
 
                         NetworkHandler.instance.sendTo(
                                 new PacketCraftingRemainingOperations(this.getMonitor().getRemainingOperations()),
-                                (EntityPlayerMP) g);
+                                epmp);
                     }
                 }
             } catch (final IOException e) {
@@ -259,15 +261,15 @@ public class ContainerCraftingCPU extends AEBaseContainer
         this.network = network;
     }
 
-    public void addOrRemovePlayerName(final String name) {
+    public void togglePlayerFollowStatus(final String name) {
         if (this.getMonitor() != null) {
-            this.getMonitor().addOrRemovePlayerName(name);
+            this.getMonitor().togglePlayerFollowStatus(name);
         }
     }
 
-    public List<String> getClusterFollowPlayerList() {
+    public List<String> getPlayersFollowingCurrentCraft() {
         if (this.getMonitor() != null) {
-            return this.getMonitor().getPlayerNameList();
+            return this.getMonitor().getPlayersFollowingCurrentCraft();
         }
         return null;
     }

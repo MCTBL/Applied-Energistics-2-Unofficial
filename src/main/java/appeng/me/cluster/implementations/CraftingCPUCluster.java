@@ -136,9 +136,9 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private long elapsedTime;
     private long startItemCount;
     private long remainingItemCount;
-    private long targetItemCount;
+    private long numsOfOutput;
 
-    private List<String> followPlayerNameList = new ArrayList<>();
+    private List<String> playersFollowingCurrentCraft = new ArrayList<>();
 
     public CraftingCPUCluster(final WorldCoord min, final WorldCoord max) {
         this.min = min;
@@ -415,18 +415,18 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             AELog.crafting(LOG_MARK_AS_COMPLETE, logStack);
         }
 
-        if (this.followPlayerNameList != null && this.followPlayerNameList.size() > 0) {
+        if (!this.playersFollowingCurrentCraft.isEmpty()) {
 
             final String elapsedTimeText = DurationFormatUtils.formatDuration(
                     TimeUnit.MILLISECONDS.convert(this.getElapsedTime(), TimeUnit.NANOSECONDS),
                     GuiText.ETAFormat.getLocal());
 
             IChatComponent messageWaitToSend = PlayerMessages.FinishCraftingRemind.get(
-                    new ChatComponentText(EnumChatFormatting.GREEN + String.valueOf(this.targetItemCount)),
+                    new ChatComponentText(EnumChatFormatting.GREEN + String.valueOf(this.numsOfOutput)),
                     this.finalOutput.getItemStack().func_151000_E(),
                     new ChatComponentText(EnumChatFormatting.GREEN + elapsedTimeText));
 
-            for (String playerName : this.followPlayerNameList) {
+            for (String playerName : this.playersFollowingCurrentCraft) {
                 // Get each EntityPlayer
                 EntityPlayer pl = this.getWorld().getPlayerEntityByName(playerName);
                 if (pl != null) {
@@ -442,7 +442,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.lastTime = 0;
         this.elapsedTime = 0;
         this.isComplete = true;
-        this.followPlayerNameList.clear();
+        this.playersFollowingCurrentCraft.clear();
     }
 
     private void updateCPU() {
@@ -819,7 +819,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         if (this.myLastLink != null && this.isBusy()
                 && this.finalOutput.isSameType(job.getOutput())
                 && this.availableStorage >= this.usedStorage + job.getByteTotal()) {
-            this.targetItemCount += job.getOutput().getStackSize();
+            this.numsOfOutput += job.getOutput().getStackSize();
             return mergeJob(g, job, src);
         }
 
@@ -844,12 +844,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             job.startCrafting(ci, this, src);
 
             // Clear the follow list by default
-            this.followPlayerNameList.clear();
-
-            // If need add player into follow list when submit crafting, use the following code
-            // be careful ClassCastException, because machine can submit crafting job too.
-
-            // this.followPlayerNameList.add(((PlayerSource) src).player.getDisplayName());
+            this.playersFollowingCurrentCraft.clear();
 
             if (ci.commit(src)) {
                 if (job.getOutput() != null) {
@@ -857,7 +852,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                     this.waiting = false;
                     this.isComplete = false;
                     this.usedStorage = job.getByteTotal();
-                    this.targetItemCount = job.getOutput().getStackSize();
+                    this.numsOfOutput = job.getOutput().getStackSize();
                     this.markDirty();
 
                     this.updateCPU();
@@ -1141,11 +1136,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         data.setBoolean("waiting", this.waiting);
         data.setBoolean("isComplete", this.isComplete);
         data.setLong("usedStorage", this.usedStorage);
-        data.setLong("targetItemCount", this.targetItemCount);
+        data.setLong("numsOfOutput", this.numsOfOutput);
 
-        if (this.followPlayerNameList != null && !this.followPlayerNameList.isEmpty()) {
+        if (!this.playersFollowingCurrentCraft.isEmpty()) {
             NBTTagList nbtTagList = new NBTTagList();
-            for (String name : this.followPlayerNameList) {
+            for (String name : this.playersFollowingCurrentCraft) {
                 nbtTagList.appendTag(new NBTTagString(name));
             }
             data.setTag("playerNameList", nbtTagList);
@@ -1258,14 +1253,13 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.elapsedTime = data.getLong("elapsedTime");
         this.startItemCount = data.getLong("startItemCount");
         this.remainingItemCount = data.getLong("remainingItemCount");
-        this.startItemCount = data.getLong("startItemCount");
-        this.targetItemCount = data.getLong("targetItemCount");
+        this.numsOfOutput = data.getLong("numsOfOutput");
 
         NBTBase tag = data.getTag("playerNameList");
         if (tag != null && tag instanceof NBTTagList ntl) {
-            this.followPlayerNameList.clear();
+            this.playersFollowingCurrentCraft.clear();
             for (int index = 0; index < ntl.tagCount(); index++) {
-                this.followPlayerNameList.add(ntl.getStringTagAt(index));
+                this.playersFollowingCurrentCraft.add(ntl.getStringTagAt(index));
             }
         }
 
@@ -1373,16 +1367,16 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         return this.startItemCount;
     }
 
-    public List<String> getPlayerNameList() {
-        return followPlayerNameList;
+    public List<String> getPlayersFollowingCurrentCraft() {
+        return playersFollowingCurrentCraft;
     }
 
-    public boolean addOrRemovePlayerName(final String name) {
-        if (this.followPlayerNameList.contains(name)) {
-            this.followPlayerNameList.remove(name);
+    public boolean togglePlayerFollowStatus(final String name) {
+        if (this.playersFollowingCurrentCraft.contains(name)) {
+            this.playersFollowingCurrentCraft.remove(name);
             return true;
         } else {
-            this.followPlayerNameList.add(name);
+            this.playersFollowingCurrentCraft.add(name);
             return false;
         }
     }
