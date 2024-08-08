@@ -318,8 +318,8 @@ gui.appliedenergistics2.Orange=橙色
 gui.appliedenergistics2.Red=红色
 gui.appliedenergistics2.TypesInfo=种类
 gui.appliedenergistics2.BytesInfo=字节
-gui.appliedenergistics2.Follow=追踪
-gui.appliedenergistics2.Unfollow=无视
+gui.appliedenergistics2.ToFollow=订阅
+gui.appliedenergistics2.ToUnfollow=取消
 
 # GUI Colors - ARGB
 gui.color.appliedenergistics2.SearchboxFocused=6E000000
@@ -524,8 +524,8 @@ gui.tooltips.appliedenergistics2.PriorityCardMode_Dec=对目标应用优先级,�
 gui.tooltips.appliedenergistics2.MultiplyPattern=乘
 gui.tooltips.appliedenergistics2.DividePattern=除
 gui.tooltips.appliedenergistics2.MultiplyOrDividePatternHint=如果是正数,就是乘以这个数. 如果是负数,则除以该数. 如果它不能被整除,则不会起作用.
-gui.tooltips.appliedenergistics2.Follow=当该合成完成时将会收到消息提示
-gui.tooltips.appliedenergistics2.Unfollow=当该合成完成时将不会收到消息提示
+gui.tooltips.appliedenergistics2.ToFollow=当前并未订阅该合成的消息\n当该合成完成时将不会接收到消息提示\n点击即可订阅
+gui.tooltips.appliedenergistics2.ToUnfollow=当前已经订阅该合成的消息\n当该合成完成时将会接收到消息提示\n点击即可取消
 
 # Units
 gui.appliedenergistics2.units.appliedenergstics=AE

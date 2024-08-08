@@ -1,8 +1,12 @@
 package appeng.client.gui.widgets;
 
+import java.util.regex.Pattern;
+
 import net.minecraft.client.gui.GuiButton;
 
 public class GuiAeButton extends GuiButton implements ITooltip {
+
+    private static final Pattern PATTERN_NEW_LINE = Pattern.compile("\\n", Pattern.LITERAL);
 
     private String tootipString;
 
@@ -18,7 +22,11 @@ public class GuiAeButton extends GuiButton implements ITooltip {
 
     @Override
     public String getMessage() {
-        return this.tootipString == null ? "" : this.tootipString;
+        if (this.tootipString != null) {
+            return PATTERN_NEW_LINE.matcher(this.tootipString).replaceAll("\n");
+        } else {
+            return "";
+        }
     }
 
     @Override

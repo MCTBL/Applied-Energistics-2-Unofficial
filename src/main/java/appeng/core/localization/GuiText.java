@@ -246,8 +246,8 @@ public enum GuiText {
     Essentias,
     TypesInfo,
     BytesInfo,
-    Follow,
-    Unfollow;
+    ToFollow,
+    ToUnfollow;
 
     private final String root;
 

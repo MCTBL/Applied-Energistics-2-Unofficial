@@ -167,8 +167,8 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
                 this.guiTop + this.ySize - 25,
                 50,
                 20,
-                GuiText.Unfollow.getLocal(),
-                ButtonToolTips.Unfollow.getLocal());
+                GuiText.ToFollow.getLocal(),
+                ButtonToolTips.ToFollow.getLocal());
         this.buttonList.add(this.follow);
 
         if (this.myIcon != null) {
@@ -282,8 +282,9 @@ public class GuiCraftingStatus extends GuiCraftingCPU implements ICraftingCPUTab
     private void updateFollowButtonText() {
         boolean isFollow = this.playersFollowingCurrentCraft.contains(this.mc.thePlayer.getCommandSenderName());
 
-        this.follow.displayString = isFollow ? GuiText.Follow.getLocal() : GuiText.Unfollow.getLocal();
-        this.follow.setTootipString(isFollow ? ButtonToolTips.Follow.getLocal() : ButtonToolTips.Unfollow.getLocal());
+        this.follow.displayString = isFollow ? GuiText.ToUnfollow.getLocal() : GuiText.ToFollow.getLocal();
+        this.follow
+                .setTootipString(isFollow ? ButtonToolTips.ToUnfollow.getLocal() : ButtonToolTips.ToFollow.getLocal());
     }
 
     @Override

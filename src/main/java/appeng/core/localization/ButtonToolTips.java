@@ -213,8 +213,8 @@ public enum ButtonToolTips {
     PriorityCardMode_Set,
     PriorityCardMode_Inc,
     PriorityCardMode_Dec,
-    Follow,
-    Unfollow;
+    ToFollow,
+    ToUnfollow;
 
     private final String root;
 
