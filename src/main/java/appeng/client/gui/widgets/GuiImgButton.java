@@ -767,6 +767,8 @@ public class GuiImgButton extends GuiButton implements ITooltip {
                     PriorityCardMode.DEC,
                     ButtonToolTips.PriorityCardMode,
                     ButtonToolTips.PriorityCardMode_Dec);
+            this.registerApp(16 * 8 + 0, Settings.CAN_PASS_THROUGH, YesNo.NO);
+            this.registerApp(16 * 8 + 1, Settings.CAN_PASS_THROUGH, YesNo.YES);
 
         }
     }
@@ -776,6 +778,12 @@ public class GuiImgButton extends GuiButton implements ITooltip {
         final ButtonAppearance a = new ButtonAppearance();
         a.displayName = title.getUnlocalized();
         a.displayValue = (String) (hint instanceof String ? hint : ((ButtonToolTips) hint).getUnlocalized());
+        a.index = iconIndex;
+        appearances.put(new EnumPair(setting, val), a);
+    }
+
+    private void registerApp(final int iconIndex, final Settings setting, final Enum val) {
+        final ButtonAppearance a = new ButtonAppearance();
         a.index = iconIndex;
         appearances.put(new EnumPair(setting, val), a);
     }

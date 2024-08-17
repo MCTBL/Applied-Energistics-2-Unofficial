@@ -7,7 +7,9 @@ import appeng.api.parts.IPart;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.AEBaseContainer;
 import appeng.container.guisync.GuiSync;
+import appeng.container.slot.SlotFake;
 import appeng.helpers.IOreFilterable;
+import appeng.tile.inventory.AppEngInternalAEInventory;
 import appeng.util.Platform;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -19,12 +21,21 @@ public class ContainerOreFilter extends AEBaseContainer {
     @SideOnly(Side.CLIENT)
     private MEGuiTextField textField;
 
+    @SideOnly(Side.CLIENT)
+    private SlotFake itemToCheck;
+
     @GuiSync(2)
     public String filter = "";
 
     public ContainerOreFilter(final InventoryPlayer ip, final IOreFilterable te) {
         super(ip, (TileEntity) (te instanceof TileEntity ? te : null), (IPart) (te instanceof IPart ? te : null));
         this.filterHost = te;
+
+        AppEngInternalAEInventory inv = new AppEngInternalAEInventory(null, 1);
+        inv.setMaxStackSize(1);
+        itemToCheck = new SlotFake(inv, 0, 100, 58);
+
+        this.addSlotToContainer(itemToCheck);
     }
 
     @SideOnly(Side.CLIENT)
@@ -49,5 +60,9 @@ public class ContainerOreFilter extends AEBaseContainer {
         if (field.equals("filter") && this.textField != null) this.textField.setText(filter);
 
         super.onUpdate(field, oldValue, newValue);
+    }
+
+    public SlotFake getItemToCheck() {
+        return itemToCheck;
     }
 }
