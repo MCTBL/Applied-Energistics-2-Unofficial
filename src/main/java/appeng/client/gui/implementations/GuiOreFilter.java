@@ -166,9 +166,17 @@ public class GuiOreFilter extends AEBaseGui implements IDropToFillTextField {
 
         if (ores.length > 0) {
 
+            // left click
             if (Mouse.isButtonDown(0)) {
-                // left click
-                textField.setText(textField.getText() + OreDictionary.getOreName(ores[0]));
+                // If had something in text field before
+                // add a ` | ` automatically
+                String oldText = textField.getText();
+                if (oldText.length() != 0) {
+                    oldText = oldText + " | ";
+                }
+
+                textField.setText(oldText + OreDictionary.getOreName(ores[0]));
+
             } else if (Mouse.isButtonDown(1)) {
                 // right click
                 textField.setText(OreDictionary.getOreName(ores[0]));
