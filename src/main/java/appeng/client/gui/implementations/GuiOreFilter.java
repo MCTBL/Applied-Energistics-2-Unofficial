@@ -174,10 +174,8 @@ public class GuiOreFilter extends AEBaseGui implements IDropToFillTextField {
                 textField.setText(OreDictionary.getOreName(ores[0]));
             }
 
-        } else {
-            textField.setText(displayName);
+            // Move the cursor to end
+            textField.setCursorPositionEnd();
         }
-        // Move the cursor to end
-        textField.setCursorPositionEnd();
     }
 }
