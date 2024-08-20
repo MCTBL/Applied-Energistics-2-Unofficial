@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.widgets.IDropToFillTextField;
@@ -164,9 +165,19 @@ public class GuiOreFilter extends AEBaseGui implements IDropToFillTextField {
         final int[] ores = OreDictionary.getOreIDs(stack);
 
         if (ores.length > 0) {
-            textField.setText(OreDictionary.getOreName(ores[0]));
+
+            if (Mouse.isButtonDown(0)) {
+                // left click
+                textField.setText(textField.getText() + OreDictionary.getOreName(ores[0]));
+            } else if (Mouse.isButtonDown(1)) {
+                // right click
+                textField.setText(OreDictionary.getOreName(ores[0]));
+            }
+
         } else {
             textField.setText(displayName);
         }
+        // Move the cursor to end
+        textField.setCursorPositionEnd();
     }
 }
