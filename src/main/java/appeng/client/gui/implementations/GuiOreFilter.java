@@ -171,7 +171,7 @@ public class GuiOreFilter extends AEBaseGui implements IDropToFillTextField {
                 // If had something in text field before
                 // add a ` | ` automatically
                 String oldText = textField.getText();
-                if (oldText.length() != 0) {
+                if (!oldText.isEmpty()) {
                     oldText = oldText + " | ";
                 }
 
