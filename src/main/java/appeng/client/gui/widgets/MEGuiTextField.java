@@ -10,14 +10,17 @@
 
 package appeng.client.gui.widgets;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiTextField;
 
 import org.lwjgl.input.Keyboard;
 
-import appeng.core.AEConfig;
 import appeng.core.localization.GuiColors;
+import codechicken.nei.FormattedTextField.TextFormatter;
 
 /**
  * A modified version of the Minecraft text field. You can initialize it over the full element span. The mouse click
@@ -32,6 +35,7 @@ public class MEGuiTextField implements ITooltip {
     private static final int PADDING = 2;
     private static boolean previousKeyboardRepeatEnabled;
     private static MEGuiTextField previousKeyboardRepeatEnabledField;
+    private Method setFormatterMethod;
     private String tooltip;
     private int fontPad;
 
@@ -49,13 +53,23 @@ public class MEGuiTextField implements ITooltip {
      */
     public MEGuiTextField(final int width, final int height, final String tooltip) {
         final FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        field = new GuiTextField(fontRenderer, 0, 0, 0, 0);
+
+        try {
+            final Class<?> formattedTextFieldClass = Class.forName("codechicken.nei.FormattedTextField");
+            final Constructor<?> defaultConstructor = formattedTextFieldClass
+                    .getConstructor(FontRenderer.class, int.class, int.class, int.class, int.class);
+
+            this.field = (GuiTextField) defaultConstructor.newInstance(fontRenderer, 0, 0, 0, 0);
+            this.setFormatterMethod = formattedTextFieldClass.getMethod("setFormatter", TextFormatter.class);
+        } catch (Throwable __) {
+            this.field = new GuiTextField(fontRenderer, 0, 0, 0, 0);
+        }
 
         w = width;
         h = height;
 
         field.setEnableBackgroundDrawing(false);
-        field.setMaxStringLength(AEConfig.instance.quartzKnifeInputLength);
+        field.setMaxStringLength(256);
         field.setTextColor(GuiColors.SearchboxText.getColor());
         field.setCursorPositionZero();
 
@@ -72,6 +86,14 @@ public class MEGuiTextField implements ITooltip {
 
     public MEGuiTextField() {
         this(0, 0);
+    }
+
+    public void setFormatter(Object formatter) {
+        if (setFormatterMethod != null) {
+            try {
+                setFormatterMethod.invoke(this.field, formatter);
+            } catch (Throwable __) {}
+        }
     }
 
     protected void setDimensionsAndColor() {
