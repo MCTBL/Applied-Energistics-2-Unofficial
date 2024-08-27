@@ -806,7 +806,7 @@ public class GuiImgButton extends GuiButton implements ITooltip {
             final int uv_y = (int) Math.floor(iconIndex / 16);
             final int uv_x = iconIndex - uv_y * 16;
             GL11.glEnable(GL11.GL_BLEND);
-            OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+            OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glTranslatef(this.xPosition, this.yPosition, 0.0F);
             if (this.halfSize) GL11.glScalef(0.5f, 0.5f, 0.5f);
