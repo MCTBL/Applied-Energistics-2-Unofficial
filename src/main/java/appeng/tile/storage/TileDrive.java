@@ -181,9 +181,10 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
     @TileEvent(TileEventType.NETWORK_READ)
     public boolean readFromStream_TileDrive(final ByteBuf data) {
         final int oldState = this.state;
+        final int oldType = this.type;
         this.state = data.readInt() & STATE_MASK;
         this.type = data.readInt();
-        return this.state != oldState;
+        return this.state != oldState || this.type != oldType;
     }
 
     @TileEvent(TileEventType.WORLD_NBT_READ)
