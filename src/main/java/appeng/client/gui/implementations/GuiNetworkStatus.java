@@ -83,7 +83,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
         super.actionPerformed(btn);
 
         final boolean backwards = Mouse.isButtonDown(1);
-        boolean oldConsum = this.isConsume;
+        boolean oldConsume = this.isConsume;
 
         if (btn == this.units) {
             if (this.isConsume) {
