@@ -100,11 +100,11 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 this.isConsume = !this.isConsume;
             }
         }
-        if (oldConsum != this.isConsume) {
+        if (oldConsume != this.isConsume) {
 
             try {
                 NetworkHandler.instance.sendToServer(new PacketNetworkStatusSelected(this.isConsume));
-            } catch (IOException __) {
+            } catch (IOException ignored) {
                 // XD
             }
 
@@ -388,7 +388,6 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                                 + ": "
                                 + Platform.formatPowerLong(refStack.getCountRequestable(), true));
                     }
-
                     toolPosX = x * sectionLength + xo + sectionLength - 8;
                     toolPosY = y * 18 + yo;
                 }

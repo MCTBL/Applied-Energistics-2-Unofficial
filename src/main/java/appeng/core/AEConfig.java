@@ -60,7 +60,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int storageBiomeID = -1;
     public int storageProviderID = -1;
     public int formationPlaneEntityLimit = 128;
-    public double networkBytesUpdateFrequency = 2.0d;
+    public double networkBytesUpdateFrequency = 1.0d;
     public float spawnChargedChance = 0.92f;
     public int quartzOresPerCluster = 4;
     public int quartzOresClusterAmount = 15;

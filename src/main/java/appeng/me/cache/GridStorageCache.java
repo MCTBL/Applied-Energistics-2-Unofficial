@@ -19,6 +19,7 @@ import net.minecraft.item.ItemStack;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.gtnewhorizon.gtnhlib.util.map.ItemStackMap;
 
 import appeng.api.AEApi;
 import appeng.api.networking.IGrid;
@@ -94,9 +95,10 @@ public class GridStorageCache implements IStorageGrid {
     private long essentiaCellCount;
     private int ticksCount;
     private int networkBytesUpdateFrequency;
-    private final HashMap<ItemStack, Integer> itemCells = new HashMap<>();
-    private final HashMap<ItemStack, Integer> fluidCells = new HashMap<>();
-    private final HashMap<ItemStack, Integer> essentiaCells = new HashMap<>();
+
+    private final ItemStackMap<Integer> itemCells = new ItemStackMap<>();
+    private final ItemStackMap<Integer> fluidCells = new ItemStackMap<>();
+    private final ItemStackMap<Integer> essentiaCells = new ItemStackMap<>();
 
     private static final int CELL_GREEN = 1;
     private static final int CELL_BLUE = 2;
@@ -114,7 +116,7 @@ public class GridStorageCache implements IStorageGrid {
         this.itemMonitor.onTick();
         this.fluidMonitor.onTick();
 
-        // update every 100Ticks by default
+        // update every 1s by default
         if (this.ticksCount < this.networkBytesUpdateFrequency) {
             this.ticksCount++;
         } else {
@@ -386,138 +388,112 @@ public class GridStorageCache implements IStorageGrid {
         }
     }
 
+    private void updateItemCellStatus(final double bytesTotalToAdd, final double bytesUsedToAdd, final int cellStatus,
+            final double typesTotalToAdd, final double typesUsedToAdd) {
+        this.itemBytesTotal += bytesTotalToAdd;
+        this.itemBytesUsed += bytesUsedToAdd;
+        switch (cellStatus) {
+            case CELL_GREEN -> itemCellG++;
+            case CELL_BLUE -> itemCellB++;
+            case CELL_ORANGE -> itemCellO++;
+            case CELL_RED -> itemCellR++;
+        }
+        this.itemTypesTotal += typesTotalToAdd;
+        this.itemTypesUsed += typesUsedToAdd;
+        this.itemCellCount++;
+    }
+
+    private void updateFluidCellStatus(final double bytesTotalToAdd, final double bytesUsedToAdd, final int cellStatus,
+            final double typesTotalToAdd, final double typesUsedToAdd) {
+        this.fluidBytesTotal += bytesTotalToAdd;
+        this.fluidBytesUsed += bytesUsedToAdd;
+        switch (cellStatus) {
+            case CELL_GREEN -> fluidCellG++;
+            case CELL_BLUE -> fluidCellB++;
+            case CELL_ORANGE -> fluidCellO++;
+            case CELL_RED -> fluidCellR++;
+        }
+        this.fluidTypesTotal += typesTotalToAdd;
+        this.fluidTypesUsed += typesUsedToAdd;
+        this.fluidCellCount++;
+    }
+
+    private void updateEssentiaCellStatus(final double bytesTotalToAdd, final double bytesUsedToAdd,
+            final int cellStatus, final double typesTotalToAdd, final double typesUsedToAdd) {
+        this.essentiaBytesTotal += bytesTotalToAdd;
+        this.essentiaBytesUsed += bytesUsedToAdd;
+        switch (cellStatus) {
+            case CELL_GREEN -> essentiaCellG++;
+            case CELL_BLUE -> essentiaCellB++;
+            case CELL_ORANGE -> essentiaCellO++;
+            case CELL_RED -> essentiaCellR++;
+        }
+        this.essentiaTypesTotal += typesTotalToAdd;
+        this.essentiaTypesUsed += typesUsedToAdd;
+        this.essentiaCellCount++;
+    }
+
+    private void updateCellsStatusUseICCRAndStack(final ICellCacheRegistry iccr, final ItemStack newCellStack) {
+        switch (iccr.getCellType()) {
+            case ITEM -> {
+                this.updateItemCellStatus(
+                        iccr.getTotalBytes(),
+                        iccr.getUsedBytes(),
+                        iccr.getCellStatus(),
+                        iccr.getTotalTypes(),
+                        iccr.getUsedTypes());
+                this.putItemStackIntoMap(itemCells, newCellStack, iccr.getCellStatus());
+            }
+            case FLUID -> {
+                this.updateFluidCellStatus(
+                        iccr.getTotalBytes(),
+                        iccr.getUsedBytes(),
+                        iccr.getCellStatus(),
+                        iccr.getTotalTypes(),
+                        iccr.getUsedTypes());
+                this.putItemStackIntoMap(fluidCells, newCellStack, iccr.getCellStatus());
+            }
+            case ESSENTIA -> {
+                this.updateEssentiaCellStatus(
+                        iccr.getTotalBytes(),
+                        iccr.getUsedBytes(),
+                        iccr.getCellStatus(),
+                        iccr.getTotalTypes(),
+                        iccr.getUsedTypes());
+                this.putItemStackIntoMap(essentiaCells, newCellStack, iccr.getCellStatus());
+            }
+        }
+    }
+
     private void updateBytesInfo() {
         this.resetCellInfo();
         try {
             for (ICellProvider icp : this.activeCellProviders) {
                 if (icp instanceof TileDrive td) {
-                    // Item cells
-                    for (IMEInventoryHandler<?> meih : td.getCellArray(StorageChannel.ITEMS)) {
-                        // exclude void cell
-                        if (((MEInventoryHandler<?>) meih).getInternal() instanceof ICellCacheRegistry iccr) {
-                            // exclude creative cell
-                            if (iccr.canGetInv()) {
-                                itemBytesTotal += iccr.getTotalBytes();
-                                itemBytesUsed += iccr.getUsedBytes();
-                                switch (iccr.getCellStatus()) {
-                                    case CELL_GREEN -> itemCellG++;
-                                    case CELL_BLUE -> itemCellB++;
-                                    case CELL_ORANGE -> itemCellO++;
-                                    case CELL_RED -> itemCellR++;
-                                }
-                                itemTypesTotal += iccr.getTotalTypes();
-                                itemTypesUsed += iccr.getUsedTypes();
-                                itemCellCount++;
-                            }
-                        }
-                    }
-                    // Essentia and Fluid cells
-                    for (IMEInventoryHandler<?> meih : td.getCellArray(StorageChannel.FLUIDS)) {
-                        // exclude void cell
-                        if (((MEInventoryHandler<?>) meih).getInternal() instanceof ICellCacheRegistry iccr) {
-                            // exclude creative cell
-                            if (iccr.canGetInv()) {
-                                if (iccr.getCellType() == ICellCacheRegistry.TYPE.FLUID) {
-                                    fluidBytesTotal += iccr.getTotalBytes();
-                                    fluidBytesUsed += iccr.getUsedBytes();
-                                    switch (iccr.getCellStatus()) {
-                                        case CELL_GREEN -> fluidCellG++;
-                                        case CELL_BLUE -> fluidCellB++;
-                                        case CELL_ORANGE -> fluidCellO++;
-                                        case CELL_RED -> fluidCellR++;
-                                    }
-                                    fluidTypesTotal += iccr.getTotalTypes();
-                                    fluidTypesUsed += iccr.getUsedTypes();
-                                    fluidCellCount++;
-                                } else if (iccr.getCellType() == ICellCacheRegistry.TYPE.ESSENTIA) {
-                                    essentiaBytesTotal += iccr.getTotalBytes();
-                                    essentiaBytesUsed += iccr.getUsedBytes();
-                                    switch (iccr.getCellStatus()) {
-                                        case CELL_GREEN -> essentiaCellG++;
-                                        case CELL_BLUE -> essentiaCellB++;
-                                        case CELL_ORANGE -> essentiaCellO++;
-                                        case CELL_RED -> essentiaCellR++;
-                                    }
-                                    essentiaTypesTotal += iccr.getTotalTypes();
-                                    essentiaTypesUsed += iccr.getUsedTypes();
-                                    essentiaCellCount++;
-                                }
-                            }
-                        }
-                    }
+                    for (int index = 0; index < td.getCellCount(); index++) {
+                        MEInventoryHandler<IAEItemStack> cellInv = td.getCellInvBySlot(index);
 
-                    for (int i = 0; i < td.getSizeInventory(); i++) {
-                        ItemStack stack = td.getStackInSlot(i);
-                        if (stack != null) {
-                            switch (td.getCellType(i)) {
-                                case 0 -> this.putItemStackIntoMap(itemCells, stack);
-                                case 1 -> this.putItemStackIntoMap(fluidCells, stack);
-                                case 2 -> this.putEssentiaItemStackIntoMap(essentiaCells, stack);
-                            }
+                        if (cellInv != null && cellInv.getInternal() instanceof ICellCacheRegistry iccr
+                                && iccr.canGetInv()) {
+                            ItemStack stack = td.getStackInSlot(index);
+                            this.updateCellsStatusUseICCRAndStack(iccr, stack);
                         }
+
                     }
 
                 } else if (icp instanceof TileChest tc) {
-                    // Check if chest is clear
+
+                    // Check if chest is empty
                     ItemStack stack = tc.getStackInSlot(1);
                     if (stack == null) continue;
+
                     IMEInventoryHandler handler = tc.getInternalHandler(StorageChannel.ITEMS);
-                    if (handler != null) {
-                        if (handler instanceof ICellCacheRegistry iccr) {
-                            // exclude creative cell
-                            if (iccr.canGetInv()) {
-                                itemBytesTotal += iccr.getTotalBytes();
-                                itemBytesUsed += iccr.getUsedBytes();
-                                switch (iccr.getCellStatus()) {
-                                    case CELL_GREEN -> itemCellG++;
-                                    case CELL_BLUE -> itemCellB++;
-                                    case CELL_ORANGE -> itemCellO++;
-                                    case CELL_RED -> itemCellR++;
-                                }
-                                itemTypesTotal += iccr.getTotalTypes();
-                                itemTypesUsed += iccr.getUsedTypes();
-                                itemCellCount++;
-                            }
-                        }
-                    } else {
+                    if (handler == null) {
                         handler = tc.getInternalHandler(StorageChannel.FLUIDS);
-                        // exclude void cell
-                        if (handler instanceof ICellCacheRegistry iccr) {
-                            // exclude creative cell
-                            if (iccr.canGetInv()) {
-                                if (iccr.getCellType() == ICellCacheRegistry.TYPE.FLUID) {
-                                    fluidBytesTotal += iccr.getTotalBytes();
-                                    fluidBytesUsed += iccr.getUsedBytes();
-                                    switch (iccr.getCellStatus()) {
-                                        case CELL_GREEN -> fluidCellG++;
-                                        case CELL_BLUE -> fluidCellB++;
-                                        case CELL_ORANGE -> fluidCellO++;
-                                        case CELL_RED -> fluidCellR++;
-                                    }
-                                    fluidTypesTotal += iccr.getTotalTypes();
-                                    fluidTypesUsed += iccr.getUsedTypes();
-                                    fluidCellCount++;
-                                } else if (iccr.getCellType() == ICellCacheRegistry.TYPE.ESSENTIA) {
-                                    essentiaBytesTotal += iccr.getTotalBytes();
-                                    essentiaBytesUsed += iccr.getUsedBytes();
-                                    switch (iccr.getCellStatus()) {
-                                        case CELL_GREEN -> essentiaCellG++;
-                                        case CELL_BLUE -> essentiaCellB++;
-                                        case CELL_ORANGE -> essentiaCellO++;
-                                        case CELL_RED -> essentiaCellR++;
-                                    }
-                                    essentiaTypesTotal += iccr.getTotalTypes();
-                                    essentiaTypesUsed += iccr.getUsedTypes();
-                                    essentiaCellCount++;
-                                }
-                            }
-                        }
                     }
 
-                    switch (tc.getCellType(1)) {
-                        case 0 -> this.putItemStackIntoMap(itemCells, stack);
-                        case 1 -> this.putItemStackIntoMap(fluidCells, stack);
-                        case 2 -> this.putEssentiaItemStackIntoMap(essentiaCells, stack);
+                    if (handler instanceof ICellCacheRegistry iccr && iccr.canGetInv()) {
+                        this.updateCellsStatusUseICCRAndStack(iccr, stack);
                     }
                 }
             }
@@ -526,21 +502,9 @@ public class GridStorageCache implements IStorageGrid {
         }
     }
 
-    private void putItemStackIntoMap(final HashMap<ItemStack, Integer> map, final ItemStack stack) {
-        ItemStack newStack = new ItemStack(stack.getItem());
-        if (map.containsKey(newStack)) {
-            map.put(newStack, map.get(newStack) + 1);
-        } else {
-            map.put(newStack, 1);
-        }
-    }
-
-    private void putEssentiaItemStackIntoMap(final HashMap<ItemStack, Integer> map, final ItemStack stack) {
-        ItemStack newStack = new ItemStack(stack.getItem());
-        newStack.setItemDamage(stack.getItemDamage());
-        if (map.containsKey(newStack)) {
-            map.put(newStack, map.get(newStack) + 1);
-        } else {
+    private void putItemStackIntoMap(final ItemStackMap<Integer> map, final ItemStack stack, final int cellStatus) {
+        ItemStack newStack = new ItemStack(stack.getItem(), 1, stack.getItemDamage());
+        if (map.computeIfPresent(newStack, (currentStack, stackCount) -> stackCount += 1) == null) {
             map.put(newStack, 1);
         }
     }
@@ -579,15 +543,15 @@ public class GridStorageCache implements IStorageGrid {
         this.essentiaCells.clear();
     }
 
-    public HashMap<ItemStack, Integer> getItemCells() {
+    public ItemStackMap<Integer> getItemCells() {
         return itemCells;
     }
 
-    public HashMap<ItemStack, Integer> getFluidCells() {
+    public ItemStackMap<Integer> getFluidCells() {
         return fluidCells;
     }
 
-    public HashMap<ItemStack, Integer> getEssentiaCells() {
+    public ItemStackMap<Integer> getEssentiaCells() {
         return essentiaCells;
     }
 

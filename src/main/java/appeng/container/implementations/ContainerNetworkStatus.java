@@ -11,7 +11,6 @@
 package appeng.container.implementations;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map.Entry;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -19,6 +18,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.util.ForgeDirection;
+
+import com.gtnewhorizon.gtnhlib.util.map.ItemStackMap;
 
 import appeng.api.AEApi;
 import appeng.api.config.CellType;
@@ -208,11 +209,12 @@ public class ContainerNetworkStatus extends AEBaseContainer {
                         case FLUID -> sg.getFluidCells();
                         case ESSENTIA -> sg.getEssentiaCells();
                     };
-
                     for (Entry<ItemStack, Integer> set : cells.entrySet()) {
+
                         final IAEItemStack ais = AEItemStack.create(set.getKey());
                         ais.setStackSize(set.getValue());
                         list.add(ais);
+
                     }
                 }
 
