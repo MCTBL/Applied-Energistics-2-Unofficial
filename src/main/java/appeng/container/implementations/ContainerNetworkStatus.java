@@ -203,14 +203,11 @@ public class ContainerNetworkStatus extends AEBaseContainer {
                     // Networ Cells
                     final GridStorageCache sg = this.network.getCache(IStorageGrid.class);
                     CellType selectedCellType = AEConfig.instance.selectedCellType();
-                    HashMap<ItemStack, Integer> cells = null;
-                    if (selectedCellType == CellType.ITEM) {
-                        cells = sg.getItemCells();
-                    } else if (selectedCellType == CellType.FLUID) {
-                        cells = sg.getFluidCells();
-                    } else if (selectedCellType == CellType.ESSENTIA) {
-                        cells = sg.getEssentiaCells();
-                    }
+                    ItemStackMap<Integer> cells = switch (selectedCellType) {
+                        case ITEM -> sg.getItemCells();
+                        case FLUID -> sg.getFluidCells();
+                        case ESSENTIA -> sg.getEssentiaCells();
+                    };
 
                     for (Entry<ItemStack, Integer> set : cells.entrySet()) {
                         final IAEItemStack ais = AEItemStack.create(set.getKey());
