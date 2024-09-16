@@ -211,7 +211,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.get(
                 "automation",
                 "networkBytesUpdateFrequency",
-                this.networkBytesUpdateFrequency).comment = "#Network bytes information update Frequency(s) default:2.0";
+                this.networkBytesUpdateFrequency).comment = "#Network bytes information update Frequency(s) default:1.0";
 
         this.wirelessTerminalBattery = this.get("battery", "wirelessTerminal", this.wirelessTerminalBattery)
                 .getInt(this.wirelessTerminalBattery);

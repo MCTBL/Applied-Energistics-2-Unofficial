@@ -25,7 +25,6 @@ public class PacketNetworkStatusSelected extends AppEngPacket {
         this.isConsume = isConsume;
 
         final ByteBuf data = Unpooled.buffer();
-
         data.writeInt(this.getPacketID());
         data.writeBoolean(this.isConsume);
 

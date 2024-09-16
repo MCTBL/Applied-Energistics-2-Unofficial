@@ -209,25 +209,24 @@ public class ContainerNetworkStatus extends AEBaseContainer {
                         case FLUID -> sg.getFluidCells();
                         case ESSENTIA -> sg.getEssentiaCells();
                     };
-                    for (Entry<ItemStack, Integer> set : cells.entrySet()) {
 
+                    for (Entry<ItemStack, Integer> set : cells.entrySet()) {
                         final IAEItemStack ais = AEItemStack.create(set.getKey());
                         ais.setStackSize(set.getValue());
                         list.add(ais);
-
                     }
                 }
 
                 for (final IAEItemStack ais : list) {
                     piu.appendItem(ais);
                 }
+
                 // Send packet
                 for (final Object c : this.crafters) {
                     if (c instanceof EntityPlayer) {
                         NetworkHandler.instance.sendTo(piu, (EntityPlayerMP) c);
                     }
                 }
-
             } catch (final IOException e) {
                 // :P
             }

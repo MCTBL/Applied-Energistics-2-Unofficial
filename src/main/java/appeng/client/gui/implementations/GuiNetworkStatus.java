@@ -100,14 +100,13 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 this.isConsume = !this.isConsume;
             }
         }
-        if (oldConsume != this.isConsume) {
 
+        if (oldConsume != this.isConsume) {
             try {
                 NetworkHandler.instance.sendToServer(new PacketNetworkStatusSelected(this.isConsume));
             } catch (IOException ignored) {
                 // XD
             }
-
         }
     }
 
