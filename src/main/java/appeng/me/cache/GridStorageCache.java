@@ -433,7 +433,7 @@ public class GridStorageCache implements IStorageGrid {
         this.essentiaCellCount++;
     }
 
-    private void updateCellsStatusUseICCRAndStack(final ICellCacheRegistry iccr, final ItemStack newCellStack) {
+    private void updateCellsStatusFromRegistry(final ICellCacheRegistry iccr, final ItemStack newCellStack) {
         switch (iccr.getCellType()) {
             case ITEM -> {
                 this.updateItemCellStatus(
@@ -476,7 +476,7 @@ public class GridStorageCache implements IStorageGrid {
                         if (cellInv != null && cellInv.getInternal() instanceof ICellCacheRegistry iccr
                                 && iccr.canGetInv()) {
                             ItemStack stack = td.getStackInSlot(index);
-                            this.updateCellsStatusUseICCRAndStack(iccr, stack);
+                            this.updateCellsStatusFromRegistry(iccr, stack);
                         }
 
                     }
@@ -493,7 +493,7 @@ public class GridStorageCache implements IStorageGrid {
                     }
 
                     if (handler instanceof ICellCacheRegistry iccr && iccr.canGetInv()) {
-                        this.updateCellsStatusUseICCRAndStack(iccr, stack);
+                        this.updateCellsStatusFromRegistry(iccr, stack);
                     }
                 }
             }
@@ -504,7 +504,7 @@ public class GridStorageCache implements IStorageGrid {
 
     private void putItemStackIntoMap(final ItemStackMap<Integer> map, final ItemStack stack, final int cellStatus) {
         ItemStack newStack = new ItemStack(stack.getItem(), 1, stack.getItemDamage());
-        if (map.computeIfPresent(newStack, (currentStack, stackCount) -> stackCount += 1) == null) {
+        if (map.computeIfPresent(newStack, (currentStack, stackCount) -> stackCount + 1) == null) {
             map.put(newStack, 1);
         }
     }
