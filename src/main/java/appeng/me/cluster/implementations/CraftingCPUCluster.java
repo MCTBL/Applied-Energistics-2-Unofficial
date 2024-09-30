@@ -147,8 +147,6 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private long remainingItemCount;
     private long numsOfOutput;
 
-    private UserLoginHandler handler = null;
-
     private HashMap<String, List<Object[]>> storeMessage = new HashMap<>();
 
     private List<CraftCompleteListener> defaultOnComplete = Arrays.asList((finalOutput, numsOfOutput, elapsedTime) -> {
@@ -164,13 +162,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                     player.addChatMessage(messageWaitToSend);
                     player.worldObj.playSoundAtEntity(player, "random.levelup", 1f, 1f);
                 } else {
-                    if (storeMessage.computeIfAbsent(playerName, v -> {
+                    storeMessage.computeIfAbsent(playerName, v -> {
                         List<Object[]> list = new ArrayList<>();
                         list.add(objArray);
                         return list;
-                    }) != null) {
-                        storeMessage.get(playerName).add(objArray);
-                    }
+                    }).add(objArray);
                 }
             }
         }
@@ -186,7 +182,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     public CraftingCPUCluster(final WorldCoord min, final WorldCoord max) {
         this.min = min;
         this.max = max;
-        this.handler = new UserLoginHandler(this.storeMessage);
+        new UserLoginHandler(this);
     }
 
     @Override
@@ -1337,7 +1333,9 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
     public void readFromNBT(final NBTTagCompound data) {
         this.finalOutput = AEItemStack.loadItemStackFromNBT((NBTTagCompound) data.getTag("finalOutput"));
-        this.storeMessage = this.readMap(data);
+
+        this.readMap(data);
+
         for (final IAEItemStack ais : this.readList((NBTTagList) data.getTag("inventory"))) {
             if (ais.isCraftable() && ais.getStackSize() == 0) // remove bugged items from CPU Clusters, they are
                                                               // spamming injectItems every tick
@@ -1420,8 +1418,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         }
     }
 
-    private HashMap<String, List<Object[]>> readMap(final NBTTagCompound tag) {
-        HashMap<String, List<Object[]>> map = new HashMap<>();
+    private void readMap(final NBTTagCompound tag) {
+        this.storeMessage.clear();
 
         if (tag.hasKey("storeMessage")) {
             NBTTagCompound compoundTag = tag.getCompoundTag("storeMessage");
@@ -1437,11 +1435,10 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                             new Object[] { itemStackFromNBT, longTag.getLong("numsOfOutput"),
                                     longTag.getLong("elapsedTime") });
                 }
-                map.put(playerName, tempList);
+                this.storeMessage.put(playerName, tempList);
             }
         }
 
-        return map;
     }
 
     private IItemList<IAEItemStack> readList(final NBTTagList tag) {
@@ -1576,23 +1573,26 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
     public class UserLoginHandler {
 
-        final Map<String, List<Object[]>> storeMessage;
+        HashMap<String, List<Object[]>> storeMessage;
 
-        public UserLoginHandler(final Map<String, List<Object[]>> storeMessage) {
-            this.storeMessage = storeMessage;
+        public UserLoginHandler(final CraftingCPUCluster cluster) {
+            this.storeMessage = cluster.storeMessage;
             FMLCommonHandler.instance().bus().register(this);
         }
 
         @SubscribeEvent
         public void playerLoginIn(final PlayerLoggedInEvent loginEvent) {
-            if (loginEvent.player instanceof EntityPlayerMP player && player.worldObj.isRemote) {
+            if (loginEvent.player instanceof EntityPlayerMP player) {
                 if (this.storeMessage.containsKey(player.getDisplayName())) {
+
                     for (Object[] objs : this.storeMessage.get(player.getDisplayName())) {
                         final IChatComponent messageWaitToSend = Platform
                                 .getMessageToSend((ItemStack) objs[0], (long) objs[1], (long) objs[2]);
                         player.addChatMessage(messageWaitToSend);
+                        player.worldObj.playSoundAtEntity(player, "random.levelup", 1f, 1f);
                     }
                     this.storeMessage.remove(player.getDisplayName());
+
                 }
             }
         }
