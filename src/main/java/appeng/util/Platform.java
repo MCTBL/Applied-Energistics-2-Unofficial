@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -57,6 +58,9 @@ import net.minecraft.stats.Achievement;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.StatCollector;
@@ -67,6 +71,8 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.oredict.OreDictionary;
+
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import com.mojang.authlib.GameProfile;
 
@@ -112,6 +118,8 @@ import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.AppEng;
 import appeng.core.features.AEFeature;
+import appeng.core.localization.GuiText;
+import appeng.core.localization.PlayerMessages;
 import appeng.core.stats.Stats;
 import appeng.core.sync.GuiBridge;
 import appeng.core.sync.GuiHostType;
@@ -1891,5 +1899,17 @@ public class Platform {
             }
         }
         return (n / BYTE_LIMIT[0]) + " " + BYTE_UNIT[0];
+    }
+
+    public static IChatComponent getMessageToSend(final ItemStack finalOutput, final long numsOfOutput,
+            final long elapsedTime) {
+        final String elapsedTimeText = DurationFormatUtils.formatDuration(
+                TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS),
+                GuiText.ETAFormat.getLocal());
+
+        return PlayerMessages.FinishCraftingRemind.get(
+                new ChatComponentText(EnumChatFormatting.GREEN + String.valueOf(numsOfOutput)),
+                finalOutput.func_151000_E(),
+                new ChatComponentText(EnumChatFormatting.GREEN + elapsedTimeText));
     }
 }

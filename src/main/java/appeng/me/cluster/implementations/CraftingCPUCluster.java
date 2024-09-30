@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
@@ -44,13 +43,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-
-import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -92,7 +88,6 @@ import appeng.api.util.IInterfaceViewable;
 import appeng.api.util.WorldCoord;
 import appeng.container.ContainerNull;
 import appeng.core.AELog;
-import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.crafting.CraftBranchFailure;
 import appeng.crafting.CraftingLink;
@@ -108,6 +103,8 @@ import appeng.util.IterationCounter;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 
 public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
@@ -150,17 +147,15 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private long remainingItemCount;
     private long numsOfOutput;
 
+    private UserLoginHandler handler = null;
+
+    private HashMap<String, List<Object[]>> storeMessage = new HashMap<>();
+
     private List<CraftCompleteListener> defaultOnComplete = Arrays.asList((finalOutput, numsOfOutput, elapsedTime) -> {
         if (!this.playersFollowingCurrentCraft.isEmpty()) {
-            final String elapsedTimeText = DurationFormatUtils.formatDuration(
-                    TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS),
-                    GuiText.ETAFormat.getLocal());
 
-            final IChatComponent messageWaitToSend = PlayerMessages.FinishCraftingRemind.get(
-                    new ChatComponentText(EnumChatFormatting.GREEN + String.valueOf(numsOfOutput)),
-                    finalOutput.func_151000_E(),
-                    new ChatComponentText(EnumChatFormatting.GREEN + elapsedTimeText));
-
+            final IChatComponent messageWaitToSend = Platform.getMessageToSend(finalOutput, numsOfOutput, elapsedTime);
+            final Object[] objArray = new Object[] { finalOutput, numsOfOutput, elapsedTime };
             for (String playerName : this.playersFollowingCurrentCraft) {
                 // Get each EntityPlayer
                 EntityPlayer player = getPlayerByName(playerName);
@@ -168,6 +163,14 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                     // Send message to player
                     player.addChatMessage(messageWaitToSend);
                     player.worldObj.playSoundAtEntity(player, "random.levelup", 1f, 1f);
+                } else {
+                    if (storeMessage.computeIfAbsent(playerName, v -> {
+                        List<Object[]> list = new ArrayList<>();
+                        list.add(objArray);
+                        return list;
+                    }) != null) {
+                        storeMessage.get(playerName).add(objArray);
+                    }
                 }
             }
         }
@@ -183,6 +186,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     public CraftingCPUCluster(final WorldCoord min, final WorldCoord max) {
         this.min = min;
         this.max = max;
+        this.handler = new UserLoginHandler(this.storeMessage);
     }
 
     @Override
@@ -1209,6 +1213,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     }
 
     public void writeToNBT(final NBTTagCompound data) {
+        data.setTag("storeMessage", this.writeMap(this.storeMessage));
+
         data.setTag("finalOutput", this.writeItem(this.finalOutput));
         data.setTag("inventory", this.writeList(this.inventory.getItemList()));
         data.setBoolean("waiting", this.waiting);
@@ -1262,6 +1268,27 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         data.setTag("providers", list);
     }
 
+    private NBTTagCompound writeMap(final HashMap<String, List<Object[]>> map) {
+        final NBTTagCompound out = new NBTTagCompound();
+        final NBTTagList allName = new NBTTagList();
+
+        for (Entry<String, List<Object[]>> entry : map.entrySet()) {
+            NBTTagList tag = new NBTTagList();
+            for (Object[] objs : entry.getValue()) {
+                tag.appendTag(this.writeItem(AEItemStack.create((ItemStack) objs[0])));
+                NBTTagCompound longTag = new NBTTagCompound();
+                longTag.setLong("numsOfOutput", (long) objs[1]);
+                longTag.setLong("elapsedTime", (long) objs[2]);
+                tag.appendTag(longTag);
+            }
+            out.setTag(entry.getKey(), tag);
+            allName.appendTag(new NBTTagString(entry.getKey()));
+        }
+
+        out.setTag("allName", allName);
+        return out;
+    }
+
     private NBTTagCompound writeItem(final IAEItemStack finalOutput2) {
         final NBTTagCompound out = new NBTTagCompound();
 
@@ -1310,6 +1337,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
     public void readFromNBT(final NBTTagCompound data) {
         this.finalOutput = AEItemStack.loadItemStackFromNBT((NBTTagCompound) data.getTag("finalOutput"));
+        this.storeMessage = this.readMap(data);
         for (final IAEItemStack ais : this.readList((NBTTagList) data.getTag("inventory"))) {
             if (ais.isCraftable() && ais.getStackSize() == 0) // remove bugged items from CPU Clusters, they are
                                                               // spamming injectItems every tick
@@ -1390,6 +1418,31 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                 }
             }
         }
+    }
+
+    private HashMap<String, List<Object[]>> readMap(final NBTTagCompound tag) {
+        HashMap<String, List<Object[]>> map = new HashMap<>();
+
+        if (tag.hasKey("storeMessage")) {
+            NBTTagCompound compoundTag = tag.getCompoundTag("storeMessage");
+            NBTTagList tagList = compoundTag.getTagList("allName", 8);
+            for (int index = 0; index < tagList.tagCount(); index++) {
+                String playerName = tagList.getStringTagAt(index);
+                NBTTagList onePlayerMessage = compoundTag.getTagList(playerName, 10);
+                List<Object[]> tempList = new ArrayList<>();
+                for (int i = 0; i < onePlayerMessage.tagCount(); i += 2) {
+                    IAEItemStack itemStackFromNBT = AEItemStack
+                            .loadItemStackFromNBT(onePlayerMessage.getCompoundTagAt(i));
+                    NBTTagCompound longTag = onePlayerMessage.getCompoundTagAt(i + 1);
+                    tempList.add(
+                            new Object[] { itemStackFromNBT, longTag.getLong("numsOfOutput"),
+                                    longTag.getLong("elapsedTime") });
+                }
+                map.put(playerName, tempList);
+            }
+        }
+
+        return map;
     }
 
     private IItemList<IAEItemStack> readList(final NBTTagList tag) {
@@ -1520,5 +1573,30 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private static class TaskProgress {
 
         private long value;
+    }
+
+    public class UserLoginHandler {
+
+        final Map<String, List<Object[]>> storeMessage;
+
+        public UserLoginHandler(final Map<String, List<Object[]>> storeMessage) {
+            this.storeMessage = storeMessage;
+            FMLCommonHandler.instance().bus().register(this);
+        }
+
+        @SubscribeEvent
+        public void playerLoginIn(final PlayerLoggedInEvent loginEvent) {
+            if (loginEvent.player instanceof EntityPlayerMP player && player.worldObj.isRemote) {
+                if (this.storeMessage.containsKey(player.getDisplayName())) {
+                    for (Object[] objs : this.storeMessage.get(player.getDisplayName())) {
+                        final IChatComponent messageWaitToSend = Platform
+                                .getMessageToSend((ItemStack) objs[0], (long) objs[1], (long) objs[2]);
+                        player.addChatMessage(messageWaitToSend);
+                    }
+                    this.storeMessage.remove(player.getDisplayName());
+                }
+            }
+        }
+
     }
 }
