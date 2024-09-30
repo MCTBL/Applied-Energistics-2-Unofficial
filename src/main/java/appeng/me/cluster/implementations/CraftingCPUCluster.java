@@ -1275,7 +1275,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         for (Entry<String, List<Object[]>> entry : map.entrySet()) {
             NBTTagList tag = new NBTTagList();
             for (Object[] objs : entry.getValue()) {
-                tag.appendTag(this.writeItem(AEItemStack.create((ItemStack) objs[0])));
+                tag.appendTag(((ItemStack) objs[0]).writeToNBT(new NBTTagCompound()));
                 NBTTagCompound longTag = new NBTTagCompound();
                 longTag.setLong("numsOfOutput", (long) objs[1]);
                 longTag.setLong("elapsedTime", (long) objs[2]);
@@ -1431,8 +1431,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                 NBTTagList onePlayerMessage = compoundTag.getTagList(playerName, 10);
                 List<Object[]> tempList = new ArrayList<>();
                 for (int i = 0; i < onePlayerMessage.tagCount(); i += 2) {
-                    IAEItemStack itemStackFromNBT = AEItemStack
-                            .loadItemStackFromNBT(onePlayerMessage.getCompoundTagAt(i));
+                    ItemStack itemStackFromNBT = ItemStack.loadItemStackFromNBT(onePlayerMessage.getCompoundTagAt(i));
                     NBTTagCompound longTag = onePlayerMessage.getCompoundTagAt(i + 1);
                     tempList.add(
                             new Object[] { itemStackFromNBT, longTag.getLong("numsOfOutput"),
