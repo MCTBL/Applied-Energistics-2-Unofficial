@@ -19,6 +19,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -964,13 +966,14 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
     protected void addMissingItemsToBookMark() {
         if (!this.missing.isEmpty() && isShiftKeyDown()) {
-            List<ItemStack> missing = new ArrayList<>();
+            List<ItemStack> newMissing = new ArrayList<>();
 
             for (IAEItemStack iaeItemStack : this.missing) {
-                missing.add(iaeItemStack.getItemStack());
+                newMissing.add(iaeItemStack.getItemStack());
             }
 
-            NEI.instance.addToBookmark(jobTree.getOutput().getItemStack(), missing);
+            newMissing = newMissing.stream().filter(Objects::nonNull).collect(Collectors.toList());
+            NEI.instance.addToBookmark(jobTree.getOutput().getItemStack(), newMissing);
         }
     }
 
