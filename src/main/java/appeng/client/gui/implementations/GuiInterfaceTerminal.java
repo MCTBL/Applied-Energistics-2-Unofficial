@@ -12,11 +12,13 @@ package appeng.client.gui.implementations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -30,7 +32,6 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
@@ -44,10 +45,10 @@ import org.lwjgl.opengl.GL12;
 import appeng.api.AEApi;
 import appeng.api.config.ActionItems;
 import appeng.api.config.Settings;
+import appeng.api.config.StringOrder;
 import appeng.api.config.TerminalStyle;
 import appeng.api.config.YesNo;
 import appeng.api.util.DimensionalCoord;
-import appeng.api.util.WorldCoord;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.IGuiTooltipHandler;
 import appeng.client.gui.IInterfaceTerminalPostUpdate;
@@ -105,7 +106,9 @@ public class GuiInterfaceTerminal extends AEBaseGui
             AppEng.MOD_ID,
             "textures/guis/newinterfaceterminal.png");
 
-    private final InterfaceTerminalList masterList = new InterfaceTerminalList();
+    private final InterfaceTerminalList masterList = new InterfaceTerminalList(
+            ((StringOrder) AEConfig.instance.settings
+                    .getSetting(Settings.INTERFACE_TERMINAL_SECTION_ORDER)).comparator);
     private final MEGuiTextField searchFieldOutputs;
     private final MEGuiTextField searchFieldInputs;
     private final MEGuiTextField searchFieldNames;
@@ -114,6 +117,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
     private final GuiImgButton guiButtonBrokenRecipes;
     private final GuiImgButton terminalStyleBox;
     private final GuiImgButton searchStringSave;
+    private final GuiImgButton guiButtonSectionOrder;
     private boolean onlyMolecularAssemblers = false;
     private boolean onlyBrokenRecipes = false;
     private boolean online;
@@ -179,6 +183,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
         guiButtonAssemblersOnly = new GuiImgButton(0, 0, Settings.ACTIONS, null);
         guiButtonHideFull = new GuiImgButton(0, 0, Settings.ACTIONS, null);
         guiButtonBrokenRecipes = new GuiImgButton(0, 0, Settings.ACTIONS, null);
+        guiButtonSectionOrder = new GuiImgButton(0, 0, Settings.INTERFACE_TERMINAL_SECTION_ORDER, StringOrder.NATURAL);
 
         terminalStyleBox = new GuiImgButton(0, 0, Settings.TERMINAL_STYLE, null);
 
@@ -224,8 +229,11 @@ public class GuiInterfaceTerminal extends AEBaseGui
         searchStringSave.xPosition = guiLeft - 18;
         searchStringSave.yPosition = terminalStyleBox.yPosition + 18;
 
+        guiButtonSectionOrder.xPosition = guiLeft - 18;
+        guiButtonSectionOrder.yPosition = searchStringSave.yPosition + 18;
+
         guiButtonBrokenRecipes.xPosition = guiLeft - 18;
-        guiButtonBrokenRecipes.yPosition = searchStringSave.yPosition + 18;
+        guiButtonBrokenRecipes.yPosition = guiButtonSectionOrder.yPosition + 18;
 
         guiButtonHideFull.xPosition = guiLeft - 18;
         guiButtonHideFull.yPosition = guiButtonBrokenRecipes.yPosition + 18;
@@ -233,9 +241,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
         guiButtonAssemblersOnly.xPosition = guiLeft - 18;
         guiButtonAssemblersOnly.yPosition = guiButtonHideFull.yPosition + 18;
 
-        if (AEConfig.instance.preserveSearchBar || isSubGui()) {
-            setSearchString();
-        }
+        setSearchString();
 
         this.setScrollBar();
         this.repositionSlots();
@@ -243,6 +249,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
         buttonList.add(guiButtonAssemblersOnly);
         buttonList.add(guiButtonHideFull);
         buttonList.add(guiButtonBrokenRecipes);
+        buttonList.add(guiButtonSectionOrder);
         buttonList.add(searchStringSave);
         buttonList.add(terminalStyleBox);
     }
@@ -293,14 +300,15 @@ public class GuiInterfaceTerminal extends AEBaseGui
         guiButtonBrokenRecipes.set(
                 onlyBrokenRecipes ? ActionItems.TOGGLE_SHOW_ONLY_INVALID_PATTERN_OFF
                         : ActionItems.TOGGLE_SHOW_ONLY_INVALID_PATTERN_ON);
+        guiButtonSectionOrder.set(AEConfig.instance.settings.getSetting(Settings.INTERFACE_TERMINAL_SECTION_ORDER));
 
         terminalStyleBox.set(AEConfig.instance.settings.getSetting(Settings.TERMINAL_STYLE));
-
-        super.drawScreen(mouseX, mouseY, btn);
 
         handleTooltip(mouseX, mouseY, searchFieldInputs);
         handleTooltip(mouseX, mouseY, searchFieldOutputs);
         handleTooltip(mouseX, mouseY, searchFieldNames);
+
+        super.drawScreen(mouseX, mouseY, btn);
     }
 
     @Override
@@ -337,6 +345,10 @@ public class GuiInterfaceTerminal extends AEBaseGui
                     initGui();
                 } else if (btn == searchStringSave) {
                     AEConfig.instance.preserveSearchBar = next == YesNo.YES;
+                } else if (btn == guiButtonSectionOrder) {
+                    AEConfig.instance.settings.putSetting(iBtn.getSetting(), next);
+                    masterList.changeSectionComparator(((StringOrder) next).comparator);
+                    masterList.markDirty();
                 }
 
                 iBtn.set(next);
@@ -353,9 +365,16 @@ public class GuiInterfaceTerminal extends AEBaseGui
     }
 
     public void setSearchString() {
-        searchFieldInputs.setText(searchFieldInputsText);
-        searchFieldOutputs.setText(searchFieldOutputsText);
-        searchFieldNames.setText(searchFieldNamesText);
+        boolean setString = AEConfig.instance.preserveSearchBar || isSubGui();
+        if (searchFieldInputs.getText().isEmpty() && setString) {
+            searchFieldInputs.setText(searchFieldInputsText);
+        }
+        if (searchFieldOutputs.getText().isEmpty() && setString) {
+            searchFieldOutputs.setText(searchFieldOutputsText);
+        }
+        if (searchFieldNames.getText().isEmpty() && setString) {
+            searchFieldNames.setText(searchFieldNamesText);
+        }
     }
 
     @Override
@@ -838,7 +857,8 @@ public class GuiInterfaceTerminal extends AEBaseGui
                     addCmd.name,
                     addCmd.rows,
                     addCmd.rowSize,
-                    addCmd.online).setLocation(addCmd.x, addCmd.y, addCmd.z, addCmd.dim)
+                    addCmd.online,
+                    addCmd.p2pOutput).setLocation(addCmd.x, addCmd.y, addCmd.z, addCmd.dim)
                             .setIcons(addCmd.selfRep, addCmd.dispRep).setItems(addCmd.items);
             masterList.addEntry(entry);
         } else if (cmd instanceof PacketInterfaceTerminalUpdate.PacketRemove) {
@@ -962,14 +982,24 @@ public class GuiInterfaceTerminal extends AEBaseGui
     private class InterfaceTerminalList {
 
         private final Map<Long, InterfaceTerminalEntry> list = new HashMap<>();
-        private final Map<String, InterfaceSection> sections = new TreeMap<>();
+        private Map<String, InterfaceSection> sections;
         private final List<InterfaceSection> visibleSections = new ArrayList<>();
         private boolean isDirty;
         private int height;
         private InterfaceTerminalEntry hoveredEntry;
 
-        InterfaceTerminalList() {
+        InterfaceTerminalList(Comparator<String> comparator) {
+            this.sections = comparator == null ? new TreeMap<>() : new TreeMap<>(comparator);
             this.isDirty = true;
+        }
+
+        void changeSectionComparator(Comparator<String> comparator) {
+            if ((this.sections instanceof TreeMap t) && !Objects.equals(comparator, t.comparator())) {
+                TreeMap<String, InterfaceSection> map = comparator == null ? new TreeMap<>()
+                        : new TreeMap<>(comparator);
+                map.putAll(this.sections);
+                this.sections = map;
+            }
         }
 
         /**
@@ -1143,7 +1173,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
             String output = GuiInterfaceTerminal.this.searchFieldOutputs.getText().toLowerCase();
 
             for (InterfaceTerminalEntry entry : entries) {
-                if (!entry.online) continue;
+                if (!entry.online || entry.p2pOutput) continue;
 
                 var moleAss = AEApi.instance().definitions().blocks().molecularAssembler().maybeStack(1);
                 entry.dispY = -9999;
@@ -1233,13 +1263,14 @@ public class GuiInterfaceTerminal extends AEBaseGui
         int guiHeight;
         int dispY = -9999;
         boolean online;
+        boolean p2pOutput;
         private Boolean[] brokenRecipes;
         int numItems = 0;
         /** Should recipe be filtered out/grayed out? */
         boolean[] filteredRecipes;
         private int hoveredSlotIdx = -1;
 
-        InterfaceTerminalEntry(long id, String name, int rows, int rowSize, boolean online) {
+        InterfaceTerminalEntry(long id, String name, int rows, int rowSize, boolean online, boolean p2pOutput) {
             this.id = id;
             if (StatCollector.canTranslate(name)) {
                 this.dispName = StatCollector.translateToLocal(name);
@@ -1255,6 +1286,7 @@ public class GuiInterfaceTerminal extends AEBaseGui
             this.rows = rows;
             this.rowSize = rowSize;
             this.online = online;
+            this.p2pOutput = p2pOutput;
             this.optionsButton = new GuiImgButton(2, 0, Settings.ACTIONS, ActionItems.HIGHLIGHT_INTERFACE);
             this.optionsButton.setHalfSize(true);
             this.guiHeight = 18 * rows + 1;
@@ -1359,26 +1391,13 @@ public class GuiInterfaceTerminal extends AEBaseGui
                     && mouseY > Math.max(optionsButton.yPosition, InterfaceSection.TITLE_HEIGHT)
                     && mouseY <= Math.min(optionsButton.yPosition + optionsButton.height, viewHeight)) {
                 optionsButton.func_146113_a(mc.getSoundHandler());
-                DimensionalCoord blockPos = new DimensionalCoord(x, y, z, dim);
-                /* View in world */
-                WorldCoord blockPos2 = new WorldCoord(
-                        (int) mc.thePlayer.posX,
-                        (int) mc.thePlayer.posY,
-                        (int) mc.thePlayer.posZ);
-                if (mc.theWorld.provider.dimensionId != dim) {
-                    mc.thePlayer.addChatMessage(
-                            new ChatComponentTranslation(PlayerMessages.InterfaceInOtherDim.getName(), dim));
-                } else {
-                    BlockPosHighlighter.highlightBlock(
-                            blockPos,
-                            System.currentTimeMillis() + 500 * WorldCoord.getTaxicabDistance(blockPos, blockPos2));
-                    mc.thePlayer.addChatMessage(
-                            new ChatComponentTranslation(
-                                    PlayerMessages.InterfaceHighlighted.getName(),
-                                    blockPos.x,
-                                    blockPos.y,
-                                    blockPos.z));
-                }
+                // When using the highlight from the interface terminal, we want it to only
+                // highlight the interface containing the patterns and not any output p2p interfaces
+                BlockPosHighlighter.highlightBlocks(
+                        mc.thePlayer,
+                        Collections.singletonList(new DimensionalCoord(x, y, z, dim)),
+                        PlayerMessages.InterfaceHighlighted.getName(),
+                        PlayerMessages.InterfaceInOtherDim.getName());
                 mc.thePlayer.closeScreen();
                 return true;
             }

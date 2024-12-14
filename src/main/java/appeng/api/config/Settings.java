@@ -41,6 +41,7 @@ public enum Settings {
     IO_DIRECTION(EnumSet.of(RelativeDirection.LEFT, RelativeDirection.RIGHT)),
 
     BLOCK(EnumSet.of(YesNo.YES, YesNo.NO)),
+    SMART_BLOCK(EnumSet.of(YesNo.YES, YesNo.NO)),
     OPERATION_MODE(EnumSet.allOf(OperationMode.class)),
 
     FULLNESS_MODE(EnumSet.allOf(FullnessMode.class)),
@@ -80,7 +81,9 @@ public enum Settings {
 
     PRIORITY_CARD_MODE(EnumSet.allOf(PriorityCardMode.class)),
 
-    TERMINAL_FONT_SIZE(EnumSet.allOf(TerminalFontSize.class));
+    TERMINAL_FONT_SIZE(EnumSet.allOf(TerminalFontSize.class)),
+
+    INTERFACE_TERMINAL_SECTION_ORDER(EnumSet.allOf(StringOrder.class));
 
     private final EnumSet<? extends Enum<?>> values;
 

@@ -310,12 +310,10 @@ gui.appliedenergistics2.NetworkBytesDetails=网络存储信息
 gui.appliedenergistics2.Items=物品
 gui.appliedenergistics2.Fluids=流体
 gui.appliedenergistics2.Essentias=源质
+gui.appliedenergistics2.NetworkCellStatus=元件状态
 gui.appliedenergistics2.NetworkItemCellCount=网络物品元件数量
 gui.appliedenergistics2.NetworkFluidCellCount=网络流体元件数量
 gui.appliedenergistics2.NetworkEssentiaCellCount=网络源质元件数量
-gui.appliedenergistics2.Green=绿色
-gui.appliedenergistics2.Orange=橙色
-gui.appliedenergistics2.Red=红色
 gui.appliedenergistics2.TypesInfo=种类
 gui.appliedenergistics2.BytesInfo=字节
 gui.appliedenergistics2.ToFollow=订阅
@@ -526,6 +524,10 @@ gui.tooltips.appliedenergistics2.DividePattern=除
 gui.tooltips.appliedenergistics2.MultiplyOrDividePatternHint=如果是正数,就是乘以这个数. 如果是负数,则除以该数. 如果它不能被整除,则不会起作用.
 gui.tooltips.appliedenergistics2.ToFollow=当前并未订阅该合成的消息\n当该合成完成时将不会接收到消息提示\n点击即可订阅
 gui.tooltips.appliedenergistics2.ToUnfollow=当前已经订阅该合成的消息\n当该合成完成时将会接收到消息提示\n点击即可取消
+
+gui.tooltips.appliedenergistics2.StringOrder=排序方式
+gui.tooltips.appliedenergistics2.StringOrderNatural=默认排序
+gui.tooltips.appliedenergistics2.StringOrderAlphanum=自然数序
 
 # Units
 gui.appliedenergistics2.units.appliedenergstics=AE

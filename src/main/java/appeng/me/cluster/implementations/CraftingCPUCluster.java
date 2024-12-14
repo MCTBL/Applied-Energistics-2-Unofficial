@@ -10,8 +10,14 @@
 
 package appeng.me.cluster.implementations;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -77,6 +84,9 @@ import appeng.api.storage.IMEMonitorHandlerReceiver;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.api.util.CraftCancelListener;
+import appeng.api.util.CraftCompleteListener;
+import appeng.api.util.CraftUpdateListener;
 import appeng.api.util.DimensionalCoord;
 import appeng.api.util.IInterfaceViewable;
 import appeng.api.util.WorldCoord;
@@ -98,6 +108,8 @@ import appeng.util.IterationCounter;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 
 public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
@@ -140,11 +152,54 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private long remainingItemCount;
     private long numsOfOutput;
 
-    private List<String> playersFollowingCurrentCraft = new ArrayList<>();
+    private final Map<String, List<CraftNotification>> unreadNotifications = new HashMap<>();
+
+    private final List<CraftCompleteListener> defaultOnComplete = Arrays
+            .asList((finalOutput, numsOfOutput, elapsedTime) -> {
+                if (!this.playersFollowingCurrentCraft.isEmpty()) {
+                    final CraftNotification notification = new CraftNotification(
+                            finalOutput,
+                            numsOfOutput,
+                            elapsedTime);
+                    final IChatComponent messageToSend = notification.createMessage();
+
+                    for (String playerName : this.playersFollowingCurrentCraft) {
+                        // Get each EntityPlayer
+                        EntityPlayer player = getPlayerByName(playerName);
+                        if (player != null) {
+                            // Send message to player
+                            player.addChatMessage(messageToSend);
+                            player.worldObj.playSoundAtEntity(player, "random.levelup", 1f, 1f);
+                        } else {
+                            this.unreadNotifications.computeIfAbsent(playerName, name -> new ArrayList<>())
+                                    .add(notification);
+                        }
+                    }
+                }
+            });
+
+    private List<CraftCompleteListener> craftCompleteListeners = initializeDefaultOnCompleteListener();
+    private final List<CraftUpdateListener> craftUpdateListeners = new ArrayList<>();
+    private final List<CraftCancelListener> craftCancelListeners = new ArrayList<>();
+    private final List<String> playersFollowingCurrentCraft = new ArrayList<>();
 
     public CraftingCPUCluster(final WorldCoord min, final WorldCoord max) {
         this.min = min;
         this.max = max;
+    }
+
+    @SubscribeEvent
+    public void onPlayerLogIn(PlayerLoggedInEvent event) {
+        final EntityPlayer player = event.player;
+        final String playerName = player.getCommandSenderName();
+        if (this.unreadNotifications.containsKey(playerName)) {
+            List<CraftNotification> notifications = this.unreadNotifications.get(playerName);
+            for (CraftNotification notification : notifications) {
+                player.addChatMessage(notification.createMessage());
+            }
+            player.worldObj.playSoundAtEntity(player, "random.levelup", 1f, 1f);
+            this.unreadNotifications.remove(playerName);
+        }
     }
 
     @Override
@@ -158,6 +213,25 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
     public ICraftingLink getLastCraftingLink() {
         return this.myLastLink;
+    }
+
+    private List<CraftCompleteListener> initializeDefaultOnCompleteListener() {
+        return new ArrayList<>(defaultOnComplete);
+    }
+
+    @Override
+    public void addOnCompleteListener(CraftCompleteListener craftCompleteListener) {
+        this.craftCompleteListeners.add(craftCompleteListener);
+    }
+
+    @Override
+    public void addOnCancelListener(CraftCancelListener onCancelListener) {
+        this.craftCancelListeners.add(onCancelListener);
+    }
+
+    @Override
+    public void addOnCraftingUpdateListener(CraftUpdateListener onCraftingStatusUpdate) {
+        this.craftUpdateListeners.add(onCraftingStatusUpdate);
     }
 
     /**
@@ -193,6 +267,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             return;
         }
         this.isDestroyed = true;
+
+        FMLCommonHandler.instance().bus().unregister(this);
 
         boolean posted = false;
 
@@ -294,7 +370,6 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         } else if (type == Actionable.MODULATE) {
             if (is != null && is.getStackSize() > 0) {
                 this.waiting = false;
-
                 this.postChange(what, src);
 
                 if (is.getStackSize() >= what.getStackSize()) {
@@ -303,7 +378,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                     this.updateElapsedTime(what);
                     this.markDirty();
                     this.postCraftingStatusChange(is);
-
+                    for (CraftUpdateListener craftUpdateListener : craftUpdateListeners) {
+                        // whatever it passes is not important, if it's not 0, it indicates the craft is active rather
+                        // than stuck.
+                        craftUpdateListener.accept(1);
+                    }
                     if (Objects.equals(finalOutput, what)) {
                         IAEStack leftover = what;
 
@@ -417,27 +496,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             AELog.crafting(LOG_MARK_AS_COMPLETE, logStack);
         }
 
-        if (!this.playersFollowingCurrentCraft.isEmpty()) {
-            final String elapsedTimeText = DurationFormatUtils.formatDuration(
-                    TimeUnit.MILLISECONDS.convert(this.getElapsedTime(), TimeUnit.NANOSECONDS),
-                    GuiText.ETAFormat.getLocal());
-
-            final IChatComponent messageWaitToSend = PlayerMessages.FinishCraftingRemind.get(
-                    new ChatComponentText(EnumChatFormatting.GREEN + String.valueOf(this.numsOfOutput)),
-                    this.finalOutput.getItemStack().func_151000_E(),
-                    new ChatComponentText(EnumChatFormatting.GREEN + elapsedTimeText));
-
-            for (String playerName : this.playersFollowingCurrentCraft) {
-                // Get each EntityPlayer
-                EntityPlayer player = getPlayerByName(playerName);
-                if (player != null) {
-                    // Send message to player
-                    player.addChatMessage(messageWaitToSend);
-                    player.worldObj.playSoundAtEntity(player, "random.levelup", 1f, 1f);
-                }
-            }
-        }
-
+        craftCompleteListeners.forEach(f -> f.apply(this.finalOutput.getItemStack(), this.numsOfOutput, elapsedTime));
         this.usedStorage = 0;
         this.remainingItemCount = 0;
         this.startItemCount = 0;
@@ -446,6 +505,10 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.numsOfOutput = 0;
         this.isComplete = true;
         this.playersFollowingCurrentCraft.clear();
+        this.craftCompleteListeners = initializeDefaultOnCompleteListener();
+        this.craftCancelListeners.clear(); // complete listener will clean external state
+                                           // so cancel listener is not called here.
+        this.craftUpdateListeners.clear();
     }
 
     private EntityPlayerMP getPlayerByName(String playerName) {
@@ -567,7 +630,12 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
         this.finalOutput = null;
         this.updateCPU();
-
+        this.craftCompleteListeners = initializeDefaultOnCompleteListener();
+        for (Runnable onCancelListener : this.craftCancelListeners) {
+            onCancelListener.run();
+        }
+        this.craftCancelListeners.clear();
+        this.craftUpdateListeners.clear();
         this.storeItems(); // marks dirty
     }
 
@@ -625,6 +693,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private void executeCrafting(final IEnergyGrid eg, final CraftingGridCache cc) {
         final Iterator<Entry<ICraftingPatternDetails, TaskProgress>> i = this.workableTasks.entrySet().iterator();
 
+        int executedTasks = 0;
         while (i.hasNext()) {
             final Entry<ICraftingPatternDetails, TaskProgress> e = i.next();
 
@@ -642,7 +711,6 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
             InventoryCrafting ic = null;
             boolean pushedPattern = false;
-
             for (final ICraftingMedium m : cc.getMediums(e.getKey())) {
                 if (e.getValue().value <= 0 || knownBusyMediums.contains(m)) {
                     continue;
@@ -777,6 +845,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             if (!pushedPattern) {
                 // No need to revisit this task on next executeCrafting this tick
                 i.remove();
+            } else {
+                executedTasks += 1;
             }
 
             if (ic != null) {
@@ -788,6 +858,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                     }
                 }
             }
+        }
+        for (IntConsumer craftingStatusListener : craftUpdateListeners) {
+            // if executed tasks is 0 for too much long time, we may need to send an alert in callback registered by
+            // addon mods, like an email.
+            craftingStatusListener.accept(executedTasks);
         }
     }
 
@@ -853,6 +928,10 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             this.playersFollowingCurrentCraft.clear();
 
             if (ci.commit(src)) {
+                craftCancelListeners.clear();
+                craftUpdateListeners.clear();
+                craftCompleteListeners = initializeDefaultOnCompleteListener(); // clear all possible listeners
+                // when it comes to a new craft,
                 if (job.getOutput() != null) {
                     this.finalOutput = job.getOutput();
                     this.waiting = false;
@@ -936,7 +1015,6 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         } catch (Exception ex) {
             AELog.error(ex, "Could not notify player of crafting failure");
         }
-        // AELog.error( e );
     }
 
     public ICraftingLink mergeJob(final IGrid g, final ICraftingJob job, final BaseActionSource src) {
@@ -1137,6 +1215,17 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         return is;
     }
 
+    private NBTTagCompound persistListeners(int from, List<?> listeners) throws IOException {
+        NBTTagCompound tagListeners = new NBTTagCompound();
+        for (int i = from; i < listeners.size(); i++) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ObjectOutputStream saveListener = new ObjectOutputStream(out);
+            saveListener.writeObject(listeners.get(i));
+            tagListeners.setByteArray(String.valueOf(i), out.toByteArray());
+        }
+        return tagListeners;
+    }
+
     public void writeToNBT(final NBTTagCompound data) {
         data.setTag("finalOutput", this.writeItem(this.finalOutput));
         data.setTag("inventory", this.writeList(this.inventory.getItemList()));
@@ -1144,6 +1233,14 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         data.setBoolean("isComplete", this.isComplete);
         data.setLong("usedStorage", this.usedStorage);
         data.setLong("numsOfOutput", this.numsOfOutput);
+        try {
+            data.setTag("craftCompleteListeners", persistListeners(1, craftCompleteListeners));
+            data.setTag("onCancelListeners", persistListeners(0, craftCancelListeners));
+            data.setTag("craftStatusListeners", persistListeners(0, craftUpdateListeners));
+        } catch (IOException e) {
+            // should not affect normal persistence even if there's mistake here.
+            AELog.error(e, "Could not save notification listeners to NBT");
+        }
 
         if (!this.playersFollowingCurrentCraft.isEmpty()) {
             NBTTagList nbtTagList = new NBTTagList();
@@ -1151,6 +1248,23 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                 nbtTagList.appendTag(new NBTTagString(name));
             }
             data.setTag("playerNameList", nbtTagList);
+        }
+
+        if (!this.unreadNotifications.isEmpty()) {
+            NBTTagList unreadNotificationsTag = new NBTTagList();
+            for (Entry<String, List<CraftNotification>> entry : this.unreadNotifications.entrySet()) {
+                NBTTagList notificationsTag = new NBTTagList();
+                for (CraftNotification notification : entry.getValue()) {
+                    NBTTagCompound tag = new NBTTagCompound();
+                    notification.writeToNBT(tag);
+                    notificationsTag.appendTag(tag);
+                }
+                NBTTagCompound playerTag = new NBTTagCompound();
+                playerTag.setString("playerName", entry.getKey());
+                playerTag.setTag("notifications", notificationsTag);
+                unreadNotificationsTag.appendTag(playerTag);
+            }
+            data.setTag("unreadNotifications", unreadNotificationsTag);
         }
 
         if (this.myLastLink != null) {
@@ -1215,6 +1329,19 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
         this.updateCPU();
         this.updateName();
+
+    }
+
+    private <T> void unpersistListeners(int from, List<T> toAdd, NBTTagCompound tagCompound)
+            throws IOException, ClassNotFoundException {
+        if (tagCompound != null) {
+            int i = from;
+            byte[] r;
+            while ((r = tagCompound.getByteArray(String.valueOf(i))).length != 0) {
+                toAdd.add((T) new ObjectInputStream(new ByteArrayInputStream(r)).readObject());
+                i++;
+            }
+        }
     }
 
     public void readFromNBT(final NBTTagCompound data) {
@@ -1263,7 +1390,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.numsOfOutput = data.getLong("numsOfOutput");
 
         NBTBase tag = data.getTag("playerNameList");
-        if (tag != null && tag instanceof NBTTagList ntl) {
+        if (tag instanceof NBTTagList ntl) {
             this.playersFollowingCurrentCraft.clear();
             for (int index = 0; index < ntl.tagCount(); index++) {
                 this.playersFollowingCurrentCraft.add(ntl.getStringTagAt(index));
@@ -1276,6 +1403,32 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             this.providers.put(
                     AEItemStack.loadItemStackFromNBT(pro.getCompoundTag("item")),
                     DimensionalCoord.readAsListFromNBT(pro));
+        }
+        try {
+            unpersistListeners(1, craftCompleteListeners, data.getCompoundTag("craftCompleteListeners"));
+            unpersistListeners(0, craftCancelListeners, data.getCompoundTag("onCancelListeners"));
+            unpersistListeners(0, craftUpdateListeners, data.getCompoundTag("craftStatusListeners"));
+        } catch (IOException | ClassNotFoundException e) {
+            // should not affect normal persistence even if there's mistake here.
+            AELog.error(e, "Could not load notification listeners from NBT");
+        }
+
+        if (data.getTag("unreadNotifications") instanceof NBTTagList unreadNotificationsTag) {
+            for (int i = 0; i < unreadNotificationsTag.tagCount(); i++) {
+                NBTTagCompound playerTag = unreadNotificationsTag.getCompoundTagAt(i);
+                String playerName = playerTag.getString("playerName");
+                List<CraftNotification> notifications = new ArrayList<>();
+                if (playerTag.getTag("notifications") instanceof NBTTagList notificationsTag) {
+                    for (int j = 0; j < notificationsTag.tagCount(); j++) {
+                        final CraftNotification notification = new CraftNotification();
+                        notification.readFromNBT(notificationsTag.getCompoundTagAt(j));
+                        notifications.add(notification);
+                    }
+                }
+                if (!notifications.isEmpty()) {
+                    this.unreadNotifications.put(playerName, notifications);
+                }
+            }
         }
     }
 
@@ -1378,13 +1531,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         return playersFollowingCurrentCraft;
     }
 
-    public boolean togglePlayerFollowStatus(final String name) {
+    public void togglePlayerFollowStatus(final String name) {
         if (this.playersFollowingCurrentCraft.contains(name)) {
             this.playersFollowingCurrentCraft.remove(name);
-            return true;
         } else {
             this.playersFollowingCurrentCraft.add(name);
-            return false;
         }
     }
 
@@ -1421,5 +1572,52 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private static class TaskProgress {
 
         private long value;
+    }
+
+    private static class CraftNotification {
+
+        private ItemStack finalOutput;
+        private long outputsCount;
+        private long elapsedTime;
+
+        public CraftNotification() {
+            this.finalOutput = null;
+            this.outputsCount = 0L;
+            this.elapsedTime = 0L;
+        }
+
+        public CraftNotification(ItemStack finalOutput, long outputsCount, long elapsedTime) {
+            this.finalOutput = finalOutput;
+            this.outputsCount = outputsCount;
+            this.elapsedTime = elapsedTime;
+        }
+
+        public IChatComponent createMessage() {
+            final String elapsedTimeText = DurationFormatUtils.formatDuration(
+                    TimeUnit.MILLISECONDS.convert(this.elapsedTime, TimeUnit.NANOSECONDS),
+                    GuiText.ETAFormat.getLocal());
+            return PlayerMessages.FinishCraftingRemind.get(
+                    new ChatComponentText(EnumChatFormatting.GREEN + String.valueOf(this.outputsCount)),
+                    this.finalOutput.func_151000_E(),
+                    new ChatComponentText(EnumChatFormatting.GREEN + elapsedTimeText));
+        }
+
+        public void readFromNBT(NBTTagCompound tag) {
+            if (tag.hasKey("finalOutput")) {
+                this.finalOutput = ItemStack.loadItemStackFromNBT(tag.getCompoundTag("finalOutput"));
+            }
+            this.outputsCount = tag.getLong("outputsCount");
+            this.elapsedTime = tag.getLong("elapsedTime");
+        }
+
+        public void writeToNBT(NBTTagCompound tag) {
+            if (this.finalOutput != null) {
+                NBTTagCompound finalOutputTag = new NBTTagCompound();
+                this.finalOutput.writeToNBT(finalOutputTag);
+                tag.setTag("finalOutput", finalOutputTag);
+            }
+            tag.setLong("outputsCount", this.outputsCount);
+            tag.setLong("elapsedTime", this.elapsedTime);
+        }
     }
 }

@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.StatCollector;
 
 import org.lwjgl.opengl.GL11;
@@ -48,6 +49,7 @@ import appeng.api.config.SidelessMode;
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
 import appeng.api.config.StorageFilter;
+import appeng.api.config.StringOrder;
 import appeng.api.config.TerminalStyle;
 import appeng.api.config.TypeFilter;
 import appeng.api.config.ViewItems;
@@ -477,6 +479,18 @@ public class GuiImgButton extends GuiButton implements ITooltip {
                     YesNo.NO,
                     ButtonToolTips.InterfaceBlockingMode,
                     ButtonToolTips.NonBlocking);
+            this.registerApp(
+                    16 + 9,
+                    Settings.SMART_BLOCK,
+                    YesNo.YES,
+                    ButtonToolTips.InterfaceSmartBlockingMode,
+                    ButtonToolTips.SmartBlocking);
+            this.registerApp(
+                    16 + 5,
+                    Settings.SMART_BLOCK,
+                    YesNo.NO,
+                    ButtonToolTips.InterfaceSmartBlockingMode,
+                    ButtonToolTips.NonSmartBlocking);
 
             this.registerApp(16 + 3, Settings.CRAFT_ONLY, YesNo.YES, ButtonToolTips.Craft, ButtonToolTips.CraftOnly);
             this.registerApp(16 + 2, Settings.CRAFT_ONLY, YesNo.NO, ButtonToolTips.Craft, ButtonToolTips.CraftEither);
@@ -768,6 +782,19 @@ public class GuiImgButton extends GuiButton implements ITooltip {
                     ButtonToolTips.PriorityCardMode,
                     ButtonToolTips.PriorityCardMode_Dec);
 
+            this.registerApp(
+                    64,
+                    Settings.INTERFACE_TERMINAL_SECTION_ORDER,
+                    StringOrder.NATURAL,
+                    ButtonToolTips.StringOrder,
+                    ButtonToolTips.StringOrderNatural);
+            this.registerApp(
+                    16,
+                    Settings.INTERFACE_TERMINAL_SECTION_ORDER,
+                    StringOrder.ALPHANUM,
+                    ButtonToolTips.StringOrder,
+                    ButtonToolTips.StringOrderAlphanum);
+
         }
     }
 
@@ -786,56 +813,34 @@ public class GuiImgButton extends GuiButton implements ITooltip {
     }
 
     @Override
-    public void drawButton(final Minecraft par1Minecraft, final int par2, final int par3) {
+    public void drawButton(final Minecraft mc, final int mouseX, final int mouseY) {
         if (this.visible) {
-            final int iconIndex = this.getIconIndex();
-
             if (this.halfSize) {
                 this.width = 8;
                 this.height = 8;
-
-                GL11.glPushMatrix();
-                GL11.glTranslatef(this.xPosition, this.yPosition, 0.0F);
-                GL11.glScalef(0.5f, 0.5f, 0.5f);
-
-                if (this.enabled) {
-                    GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                } else {
-                    GL11.glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
-                }
-
-                par1Minecraft.renderEngine.bindTexture(ExtraBlockTextures.GuiTexture("guis/states.png"));
-                this.field_146123_n = par2 >= this.xPosition && par3 >= this.yPosition
-                        && par2 < this.xPosition + this.width
-                        && par3 < this.yPosition + this.height;
-
-                final int uv_y = (int) Math.floor(iconIndex / 16);
-                final int uv_x = iconIndex - uv_y * 16;
-
-                this.drawTexturedModalRect(0, 0, 256 - 16, 256 - 16, 16, 16);
-                this.drawTexturedModalRect(0, 0, uv_x * 16, uv_y * 16, 16, 16);
-                this.mouseDragged(par1Minecraft, par2, par3);
-
-                GL11.glPopMatrix();
-            } else {
-                if (this.enabled) {
-                    GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                } else {
-                    GL11.glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
-                }
-
-                par1Minecraft.renderEngine.bindTexture(ExtraBlockTextures.GuiTexture("guis/states.png"));
-                this.field_146123_n = par2 >= this.xPosition && par3 >= this.yPosition
-                        && par2 < this.xPosition + this.width
-                        && par3 < this.yPosition + this.height;
-
-                final int uv_y = (int) Math.floor(iconIndex / 16);
-                final int uv_x = iconIndex - uv_y * 16;
-
-                this.drawTexturedModalRect(this.xPosition, this.yPosition, 256 - 16, 256 - 16, 16, 16);
-                this.drawTexturedModalRect(this.xPosition, this.yPosition, uv_x * 16, uv_y * 16, 16, 16);
-                this.mouseDragged(par1Minecraft, par2, par3);
             }
+            this.field_146123_n = mouseX >= this.xPosition && mouseY >= this.yPosition
+                    && mouseX < this.xPosition + this.width
+                    && mouseY < this.yPosition + this.height;
+            if (this.enabled) {
+                GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+            } else {
+                GL11.glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+            }
+            mc.renderEngine.bindTexture(ExtraBlockTextures.GuiTexture("guis/states.png"));
+            final int iconIndex = this.getIconIndex();
+            final int uv_y = (int) Math.floor(iconIndex / 16);
+            final int uv_x = iconIndex - uv_y * 16;
+            GL11.glEnable(GL11.GL_BLEND);
+            OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glTranslatef(this.xPosition, this.yPosition, 0.0F);
+            if (this.halfSize) GL11.glScalef(0.5f, 0.5f, 0.5f);
+            this.drawTexturedModalRect(0, 0, 256 - 16, 256 - 16, 16, 16);
+            this.drawTexturedModalRect(0, 0, uv_x * 16, uv_y * 16, 16, 16);
+            if (this.halfSize) GL11.glScalef(2f, 2f, 2f);
+            GL11.glTranslatef(-this.xPosition, -this.yPosition, 0.0F);
+            this.mouseDragged(mc, mouseX, mouseY);
         }
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     }
