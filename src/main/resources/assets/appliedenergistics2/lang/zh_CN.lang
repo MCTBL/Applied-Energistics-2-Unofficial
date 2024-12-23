@@ -507,10 +507,6 @@ gui.tooltips.appliedenergistics2.CraftingModeIgnoreMissingDesc=在ME系统内原
 
 gui.tooltips.appliedenergistics2.ExtraOptions=额外选项
 
-gui.tooltips.appliedenergistics2.FakeCraftingMode=伪合成
-gui.tooltips.appliedenergistics2.FakeCraftingOn=伪合成开启
-gui.tooltips.appliedenergistics2.FakeCraftingOff=伪合成关闭
-
 gui.tooltips.appliedenergistics2.SwitchBytesInfo=存储信息
 gui.tooltips.appliedenergistics2.SwitchBytesInfo_Item=物品
 gui.tooltips.appliedenergistics2.SwitchBytesInfo_Fluid=流体

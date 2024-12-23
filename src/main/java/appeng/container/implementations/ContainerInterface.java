@@ -18,7 +18,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
 import appeng.api.config.AdvancedBlockingMode;
-import appeng.api.config.FakeCraftingMode;
 import appeng.api.config.InsertionMode;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.SecurityPermissions;
@@ -64,9 +63,6 @@ public class ContainerInterface extends ContainerUpgradeable implements IOptiona
 
     @GuiSync(12)
     public LockCraftingMode lockCraftingMode = LockCraftingMode.NONE;
-
-    @GuiSync(16)
-    public FakeCraftingMode fakeCraftingMode = FakeCraftingMode.FAKE;
 
     @GuiSync(8)
     public InsertionMode insertionMode = InsertionMode.DEFAULT;
@@ -171,7 +167,6 @@ public class ContainerInterface extends ContainerUpgradeable implements IOptiona
         this.setPatternOptimization((YesNo) cm.getSetting(Settings.PATTERN_OPTIMIZATION));
         this.setAdvancedBlockingMode((AdvancedBlockingMode) cm.getSetting(Settings.ADVANCED_BLOCKING_MODE));
         this.setLockCraftingMode((LockCraftingMode) cm.getSetting(Settings.LOCK_CRAFTING_MODE));
-        this.setFakeCraftingMode((FakeCraftingMode) cm.getSetting(Settings.FAKE_CRAFTING_MODE));
     }
 
     public void doublePatterns(int val) {
@@ -257,14 +252,6 @@ public class ContainerInterface extends ContainerUpgradeable implements IOptiona
 
     private void setLockCraftingMode(LockCraftingMode mode) {
         this.lockCraftingMode = mode;
-    }
-
-    public FakeCraftingMode getFakeCraftingMode() {
-        return this.fakeCraftingMode;
-    }
-
-    public void setFakeCraftingMode(FakeCraftingMode mode) {
-        this.fakeCraftingMode = mode;
     }
 
     public int getPatternCapacityCardsInstalled() {

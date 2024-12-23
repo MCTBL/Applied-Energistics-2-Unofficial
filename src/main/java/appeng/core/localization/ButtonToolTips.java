@@ -205,9 +205,6 @@ public enum ButtonToolTips {
     CraftingModeIgnoreMissing,
     CraftingModeIgnoreMissingDesc,
     ExtraOptions,
-    FakeCraftingMode,
-    FakeCraftingOn,
-    FakeCraftingOff,
 
     SwitchBytesInfo,
     SwitchBytesInfo_Item,

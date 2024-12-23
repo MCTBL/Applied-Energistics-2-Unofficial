@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableSet;
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
 import appeng.api.config.AdvancedBlockingMode;
-import appeng.api.config.FakeCraftingMode;
 import appeng.api.config.InsertionMode;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Settings;
@@ -151,7 +150,6 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
         this.cm.registerSetting(Settings.ADVANCED_BLOCKING_MODE, AdvancedBlockingMode.DEFAULT);
         this.cm.registerSetting(Settings.LOCK_CRAFTING_MODE, LockCraftingMode.NONE);
         this.cm.registerSetting(Settings.PATTERN_OPTIMIZATION, YesNo.YES);
-        this.cm.registerSetting(Settings.FAKE_CRAFTING_MODE, FakeCraftingMode.FAKE);
 
         this.iHost = ih;
         this.craftingTracker = new MultiCraftingTracker(this.iHost, 9);
@@ -207,8 +205,6 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
             if (this.getInstalledUpgrades(Upgrades.LOCK_CRAFTING) == 0) {
                 cm.putSetting(Settings.LOCK_CRAFTING_MODE, LockCraftingMode.NONE);
                 resetCraftingLock();
-            } else if (this.getInstalledUpgrades(Upgrades.FAKE_CRAFTING) == 0) {
-                cm.putSetting(Settings.FAKE_CRAFTING_MODE, FakeCraftingMode.NONE);
             }
         }
     }
@@ -1043,8 +1039,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
     }
 
     public boolean isFakeCraftingMode() {
-        return this.getInstalledUpgrades(Upgrades.FAKE_CRAFTING) != 0
-                && cm.getSetting(Settings.FAKE_CRAFTING_MODE) == FakeCraftingMode.FAKE;
+        return this.getInstalledUpgrades(Upgrades.FAKE_CRAFTING) != 0;
     }
 
     private static boolean acceptsItems(final InventoryAdaptor ad, final InventoryCrafting table,
